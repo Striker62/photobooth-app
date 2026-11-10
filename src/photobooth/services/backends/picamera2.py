@@ -19,6 +19,11 @@ from .abstractbackend import AbstractBackend, BackendStats, StillRequest
 
 logger = logging.getLogger("app_picamera2")
 
+# Tested IMX477 / Selphy CP1500 calibration, carried over from the v8.6.0 box.
+# Apply to both modes so preview and still capture use the same crop and AWB preset.
+CAMERA_AWB_MODE = controls.AwbModeEnum.Daylight
+CAMERA_SCALER_CROP = (430, 440, 3197, 2160)
+
 
 class PicamLoresData(io.BufferedIOBase):
     """Lores data class used for streaming.
@@ -267,7 +272,11 @@ class Picamera2Backend(AbstractBackend):
             encode="lores",
             buffer_count=3,
             display="lores",
-            controls={"FrameRate": self._config.framerate_still_mode},
+            controls={
+                "FrameRate": self._config.framerate_still_mode,
+                "AwbMode": CAMERA_AWB_MODE,
+                "ScalerCrop": CAMERA_SCALER_CROP,
+            },
             transform=self._transform,
         )
 
@@ -278,7 +287,11 @@ class Picamera2Backend(AbstractBackend):
             encode="lores",
             buffer_count=3,
             display="lores",
-            controls={"FrameRate": self._config.framerate_video_mode},
+            controls={
+                "FrameRate": self._config.framerate_video_mode,
+                "AwbMode": CAMERA_AWB_MODE,
+                "ScalerCrop": CAMERA_SCALER_CROP,
+            },
             transform=self._transform,
         )
         # capture_file image quality

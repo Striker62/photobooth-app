@@ -62,34 +62,34 @@ class GroupCameraPicamera2(BaseModelCamera):
         description="Camera number. Usually 0 or 1.",
     )
     CAPTURE_CAM_RESOLUTION_WIDTH: int = Field(
-        default=4608,
+        default=1184,
         description="camera resolution width to capture high resolution photo",
     )
     CAPTURE_CAM_RESOLUTION_HEIGHT: int = Field(
-        default=2592,
+        default=800,
         description="camera resolution height to capture high resolution photo",
     )
     PREVIEW_CAM_RESOLUTION_WIDTH: int = Field(
-        default=2304,
+        default=1184,
         ge=500,
         le=3500,  # hardware encoder in pi only supports max 4000 width/height
         description="camera resolution width to capture live video",
     )
     PREVIEW_CAM_RESOLUTION_HEIGHT: int = Field(
-        default=1296,
+        default=800,
         ge=500,
         le=2500,  # hardware encoder in pi only supports max 4000 width/height
         description="camera resolution height to capture live video",
     )
     LIVEVIEW_RESOLUTION_WIDTH: int = Field(
-        default=1152,
+        default=1184,
         ge=500,
         le=3500,  # hardware encoder in pi only supports max 4000 width/height
         description="actual resolution width for liveview stream",
         json_schema_extra={"computeIntense": True},
     )
     LIVEVIEW_RESOLUTION_HEIGHT: int = Field(
-        default=648,
+        default=800,
         ge=500,
         le=2500,  # hardware encoder in pi only supports max 4000 width/height
         description="actual resolution height for liveview stream",
