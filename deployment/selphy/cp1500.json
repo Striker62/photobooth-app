@@ -1,0 +1,11 @@
+{
+  "queue": "Selphy_CP1500_USB",
+  "model": "gutenprint.5.3://canon-cp1500/expert",
+  "options": {
+    "PageSize": "Postcard",
+    "ColorModel": "RGB",
+    "StpBorderless": "True",
+    "StpImageType": "Photo"
+  },
+  "photobooth_command": "lp -d Selphy_CP1500_USB -n 1 -o fit-to-page \"{filename}\""
+}

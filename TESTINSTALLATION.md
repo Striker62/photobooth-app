@@ -44,6 +44,9 @@ wieder in ~/photobooth-data-v9-test wechseln.
 
 ## Abnahme auf der Box
 
+Die USB-Druckereinrichtung samt gespeichertem Profil und Einrichtungsskript
+steht in [deployment/selphy/README.md](deployment/selphy/README.md).
+
 1. Livebild und Countdown-Vorschau auf Bildausschnitt und Farben pruefen.
 2. Foto aufnehmen und die tatsaechliche Dateiaufloesung kontrollieren.
 3. Vorlage separat uebernehmen und Foto mit Vorschau vergleichen.
