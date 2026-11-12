@@ -40,7 +40,10 @@ class Wled(ResilientService, BasePlugin[WledConfig]):
 
         # None in queue can be used on shutdown to reduce waiting for timeout
         # None in variable means there is no wled service running that could process external triggers.
-        self._queue: Queue[WledPreset | None] | None = None
+        self._queue: Queue[int | None] | None = None
+        self._desired_preset = WledPreset.STANDBY
+        self._print_queue_paused = False
+        self._preset_lock = threading.Lock()
 
     def __str__(self):
         return f"WLED ({self._config.common.serial_port})"
@@ -140,15 +143,29 @@ class Wled(ResilientService, BasePlugin[WledConfig]):
     def acq_after_shot(self):
         self.send_preset(WledPreset.STANDBY)
 
+    @hookimpl
+    def print_queue_paused_changed(self, paused: bool):
+        with self._preset_lock:
+            self._print_queue_paused = paused
+            if self._desired_preset == WledPreset.STANDBY and self._config.common.print_error_preset:
+                self._enqueue_preset(self._standby_preset_id())
+
+    def _standby_preset_id(self) -> int:
+        if self._print_queue_paused and self._config.common.print_error_preset:
+            return self._config.common.print_error_preset
+        return WledPreset.STANDBY.value
+
     def send_preset(self, preset: WledPreset):
-        # print(f"\n\n{preset.value} {preset.name}\n")
+        with self._preset_lock:
+            self._desired_preset = preset
+            preset_id = self._standby_preset_id() if preset == WledPreset.STANDBY else preset.value
+            self._enqueue_preset(preset_id)
 
-        if not self._queue:
-            # no queue, request ignored.
+    def _enqueue_preset(self, preset_id: int):
+        if self._queue is None:
             return
-
         try:
-            self._queue.put_nowait(preset)
+            self._queue.put_nowait(preset_id)
         except Full:
             logger.warning("the queue to send wled presets is full, maybe the service died?")
 
@@ -212,7 +229,7 @@ class Wled(ResilientService, BasePlugin[WledConfig]):
                 # shutdown is requested
                 break
 
-            self._serial.write(json.dumps({"ps": preset.value}).encode())
+            self._serial.write(json.dumps({"ps": preset}).encode())
 
             # add a small delay after every write so wled can settle and on fast changes the LED effect is at least
             # visible for a short time.

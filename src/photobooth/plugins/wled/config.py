@@ -16,6 +16,14 @@ class Common(BaseModel):
         json_schema_extra={"list_api": "/api/admin/enumerate/serialports"},
     )
 
+    print_error_preset: int = Field(
+        default=0,
+        ge=0,
+        le=250,
+        title="WLED-Preset bei Druckfehler",
+        description="ID des WLED-Presets fuer eine angehaltene Druckwarteschlange. 0 deaktiviert die Anzeige.",
+    )
+
     use_separate_thrill_presets: bool = Field(
         default=False,
         description="Enable to distinguish the countdown preset for stills/video/multicamera jobs. This is useful if you have multiple cameras and show an animation directed to the lens of the camera. You need to add the presets 20, 21 and 22 to the WLED module. See documentation for more details and reference presets for download.",

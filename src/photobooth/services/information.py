@@ -55,6 +55,7 @@ class InformationService(BaseService):
         logger.info(f"Disk usage of working dir: {psutil.disk_usage(str(Path.cwd().absolute())).percent}")
 
         self._paused_print_queues.clear()
+        pluggy_pm.hook.print_queue_paused_changed(paused=False)
         self._stats_interval_timer.start()
         self._cpu_percent_thread = StoppableThread(name="_on_cpu_percent_worker", target=self._on_cpu_percent_fun, daemon=True)
         self._cpu_percent_thread.start()
@@ -149,11 +150,11 @@ class InformationService(BaseService):
         self._check_print_queues()
 
     def _check_print_queues(self):
-        if not appconfig.share.sharing_enabled:
-            return
+        was_paused = bool(self._paused_print_queues)
         queues = {
             queue
             for action in appconfig.share.actions
+            if appconfig.share.sharing_enabled
             if (queue := local_lp_queue(action.processing.share_command, action.processing.printer_name))
         }
         self._paused_print_queues.intersection_update(queues)
@@ -170,6 +171,9 @@ class InformationService(BaseService):
                     )
             else:
                 self._paused_print_queues.discard(queue)
+        paused = bool(self._paused_print_queues)
+        if paused != was_paused:
+            pluggy_pm.hook.print_queue_paused_changed(paused=paused)
 
     def _gather_limits_counter(self) -> list[ShareLimitsPublic]:
         with Session(engine) as session:

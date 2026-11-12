@@ -82,6 +82,10 @@ class PluginAcquisitionSpec:
         """triggers before a multicam still only"""
 
     @hookspec
+    def print_queue_paused_changed(self, paused: bool) -> None:
+        """Notify plugins when any monitored CUPS print queue is paused."""
+
+    @hookspec
     def acq_after_shot(self) -> None:
         """triggers after a capture still event"""
 
