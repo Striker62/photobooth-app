@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from importlib.metadata import version
 from pathlib import Path
+from time import monotonic
 from typing import Any, cast
 
 import psutil
@@ -18,7 +19,7 @@ from ..database.models import Cacheditem, Mediaitem, ShareLimits, UsageStats
 from ..database.schemas import ShareLimitsPublic, UsageStatsPublic
 from ..models.genericstats import GenericStats
 from ..plugins import pm as pluggy_pm
-from ..utils.printer import local_lp_queue, local_print_problem
+from ..utils.printer import local_lp_queue, local_print_problem, resume_selphy_after_refill
 from ..utils.repeatedtimer import RepeatedTimer
 from ..utils.stoppablethread import StoppableThread
 from .acquisition import AcquisitionService
@@ -42,6 +43,7 @@ class InformationService(BaseService):
         self._cpu_percent: float = 0.0
         self._skip_gathering: set = set()
         self._paused_print_queues: set[str] = set()
+        self._selphy_next_probe: dict[str, float] = {}
 
     def start(self):
         super().start()
@@ -55,6 +57,7 @@ class InformationService(BaseService):
         logger.info(f"Disk usage of working dir: {psutil.disk_usage(str(Path.cwd().absolute())).percent}")
 
         self._paused_print_queues.clear()
+        self._selphy_next_probe.clear()
         pluggy_pm.hook.print_queue_paused_changed(paused=False)
         self._stats_interval_timer.start()
         self._cpu_percent_thread = StoppableThread(name="_on_cpu_percent_worker", target=self._on_cpu_percent_fun, daemon=True)
@@ -163,6 +166,18 @@ class InformationService(BaseService):
                 problem = local_print_problem(queue)
             except RuntimeError:
                 continue
+            if problem == "paused" and appconfig.share.selphy_auto_resume:
+                now = monotonic()
+                if now >= self._selphy_next_probe.get(queue, 0):
+                    self._selphy_next_probe[queue] = now + 10
+                    try:
+                        if resume_selphy_after_refill(queue):
+                            logger.info("Selphy paper or tray recovered, resumed CUPS queue %s", queue)
+                            problem = None
+                    except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as exc:
+                        logger.warning("Cannot automatically resume CUPS queue %s: %s", queue, exc)
+            else:
+                self._selphy_next_probe.pop(queue, None)
             if problem:
                 if queue not in self._paused_print_queues:
                     self._paused_print_queues.add(queue)

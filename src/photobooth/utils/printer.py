@@ -85,6 +85,51 @@ def selphy_usb_present(device_uri: str, usb_devices: Path = Path("/sys/bus/usb/d
     return False
 
 
+def _printer_uri(printer_name: str) -> str:
+    output = subprocess.check_output(
+        ["lpstat", "-v", printer_name],
+        text=True,
+        stderr=subprocess.STDOUT,
+        env={**os.environ, "LC_ALL": "C"},
+        timeout=2,
+    )
+    return output.strip().removeprefix(f"device for {printer_name}: ")
+
+
+def resume_selphy_after_refill(printer_name: str) -> bool:
+    """Resume only a CP1500 queue stopped by a paper or tray fault."""
+    status, detail = get_printer_status_linux(printer_name)
+    if status != PrinterStatus.DISABLED or not re.search(
+        r"^\s*printer error: (?:no paper tray \(03\)|paper feed \(no paper\?\) \(02\))\s*$", detail, re.MULTILINE
+    ):
+        return False
+    uri = _printer_uri(printer_name)
+    if selphy_usb_present(uri) is not True:
+        return False
+    serial = unquote(urlsplit(uri).path.lstrip("/"))
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", serial):
+        return False
+
+    probe = subprocess.run(
+        [
+            "/usr/bin/sudo", "-n", "/usr/bin/env", "BACKEND=canonselphyneo", f"SERIAL={serial}",
+            "/usr/lib/cups/backend/gutenprint53+usb", "-s",
+        ],
+        capture_output=True, text=True, timeout=5, stdin=subprocess.DEVNULL,
+    )
+    if probe.returncode != 0:
+        raise RuntimeError(probe.stderr.strip() or "Selphy status query failed.")
+    output = probe.stdout + "\n" + probe.stderr
+    if not re.search(r"^INFO: Printer state: Idle\s*$", output, re.MULTILINE) or "printer error:" in output.lower():
+        return False
+
+    # An operator may have changed the queue while the USB probe ran.
+    if get_printer_status_linux(printer_name) != (status, detail):
+        return False
+    subprocess.run(["cupsenable", printer_name], check=True, timeout=3, stdin=subprocess.DEVNULL, capture_output=True)
+    return True
+
+
 def local_print_problem(printer_name: str) -> str | None:
     """Report CUPS faults or a missing Selphy USB device."""
     status, detail = get_printer_status_linux(printer_name)
@@ -99,15 +144,7 @@ def local_print_problem(printer_name: str) -> str | None:
     ):
         return "unavailable"
     try:
-        device = subprocess.check_output(
-            ["lpstat", "-v", printer_name],
-            text=True,
-            stderr=subprocess.STDOUT,
-            env={**os.environ, "LC_ALL": "C"},
-            timeout=2,
-        ).strip()
-        uri = device.removeprefix(f"device for {printer_name}: ")
-        if selphy_usb_present(uri) is False:
+        if selphy_usb_present(_printer_uri(printer_name)) is False:
             return "unavailable"
     except (OSError, subprocess.SubprocessError, ValueError):
         pass
