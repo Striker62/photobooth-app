@@ -12,17 +12,19 @@ from sqlalchemy import CursorResult, delete, func, select
 from sqlalchemy.orm import Session
 
 from .. import CACHE_PATH, MEDIA_PATH, RECYCLE_PATH, TMP_PATH
+from ..appconfig import appconfig
 from ..database.database import engine
 from ..database.models import Cacheditem, Mediaitem, ShareLimits, UsageStats
 from ..database.schemas import ShareLimitsPublic, UsageStatsPublic
 from ..models.genericstats import GenericStats
 from ..plugins import pm as pluggy_pm
+from ..utils.printer import PrinterStatus, get_printer_status, local_lp_queue
 from ..utils.repeatedtimer import RepeatedTimer
 from ..utils.stoppablethread import StoppableThread
 from .acquisition import AcquisitionService
 from .base import BaseService
 from .sse import sse_service
-from .sse.sse_ import SseEventIntervalInformationRecord, SseEventOnetimeInformationRecord
+from .sse.sse_ import SseEventIntervalInformationRecord, SseEventOnetimeInformationRecord, SseEventTranslateableFrontendNotification
 
 logger = logging.getLogger(__name__)
 STATS_INTERVAL_TIMER = 2  # every x seconds
@@ -39,6 +41,7 @@ class InformationService(BaseService):
         self._cpu_percent_thread = StoppableThread(name="_on_cpu_percent_worker", target=self._on_cpu_percent_fun, daemon=True)
         self._cpu_percent: float = 0.0
         self._skip_gathering: set = set()
+        self._paused_print_queues: set[str] = set()
 
     def start(self):
         super().start()
@@ -51,6 +54,7 @@ class InformationService(BaseService):
         logger.info(f"Computer model: {self._gather_model()}")
         logger.info(f"Disk usage of working dir: {psutil.disk_usage(str(Path.cwd().absolute())).percent}")
 
+        self._paused_print_queues.clear()
         self._stats_interval_timer.start()
         self._cpu_percent_thread = StoppableThread(name="_on_cpu_percent_worker", target=self._on_cpu_percent_fun, daemon=True)
         self._cpu_percent_thread.start()
@@ -142,6 +146,30 @@ class InformationService(BaseService):
     def _on_stats_interval_timer(self):
         # gather information to be sent off on timer tick:
         sse_service.dispatch_event(self.get_interval_inforecord())
+        self._check_print_queues()
+
+    def _check_print_queues(self):
+        if not appconfig.share.sharing_enabled:
+            return
+        queues = {
+            queue
+            for action in appconfig.share.actions
+            if (queue := local_lp_queue(action.processing.share_command, action.processing.printer_name))
+        }
+        self._paused_print_queues.intersection_update(queues)
+        for queue in queues:
+            try:
+                status, _ = get_printer_status(queue)
+            except RuntimeError:
+                continue
+            if status == PrinterStatus.DISABLED:
+                if queue not in self._paused_print_queues:
+                    self._paused_print_queues.add(queue)
+                    sse_service.dispatch_event(
+                        SseEventTranslateableFrontendNotification(color="negative", message_key="share.print_queue_paused")
+                    )
+            else:
+                self._paused_print_queues.discard(queue)
 
     def _gather_limits_counter(self) -> list[ShareLimitsPublic]:
         with Session(engine) as session:

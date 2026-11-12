@@ -4,8 +4,7 @@
 
 Auf der neuen Testkarte: Raspberry Pi 4, Raspberry Pi OS Trixie 64 Bit,
 Photobooth-App 9.0.0, Gutenprint 5.3.5, CP1500 per USB.
-Der USB-Druck funktioniert. Der Ausdruck wirkt noch etwas groesser bzw.
-staerker beschnitten als das Galeriebild. Die Groessenabstimmung ist offen.
+Der USB-Druck funktioniert. Mit deaktiviertem Randlosdruck wurde ein Rand von rund 3 mm je Seite gemessen. Der Bildausschnitt entspricht der Livevorschau.
 Das Einrichtungsskript selbst muss noch auf dem Pi getestet werden.
 
 ## 1. Drucksystem
@@ -95,7 +94,7 @@ systemweiten Standarddrucker und entfernt keine anderen Warteschlangen.
 Eine vorhandene Warteschlange mit anderem Ziel wird nicht ueberschrieben;
 eine angehaltene bestehende Warteschlange wird nicht automatisch aktiviert.
 
-Profil in `cp1500.json`: Postcard, RGB, Randlos=True, Bildtyp=Photo.
+Profil in `cp1500.json`: Postcard, RGB, Randlos=False, Bildtyp=Photo.
 Es setzt passendes Postkartenpapier voraus. Helligkeit, Gamma und die
 Seitenanpassung des Treibers bleiben bei einer neuen Queue auf Standard.
 Weitere bereits vorhandene Druckoptionen werden nicht zurueckgesetzt.
@@ -108,7 +107,7 @@ Im Druck-/Teilen-Eintrag der Fotobox:
 - Befehlsstring / `share_command`:
 
 ```text
-lp -d Selphy_CP1500_USB -n 1 -o fit-to-page "{filename}"
+lp -d Selphy_CP1500_USB -n 1 -o fit-to-page -o StpBorderless=False "{filename}"
 ```
 
 `{filename}` einschliesslich Anfuehrungszeichen beibehalten. Ein Exemplar

@@ -4,8 +4,8 @@
   "options": {
     "PageSize": "Postcard",
     "ColorModel": "RGB",
-    "StpBorderless": "True",
+    "StpBorderless": "False",
     "StpImageType": "Photo"
   },
-  "photobooth_command": "lp -d Selphy_CP1500_USB -n 1 -o fit-to-page \"{filename}\""
+  "photobooth_command": "lp -d Selphy_CP1500_USB -n 1 -o fit-to-page -o StpBorderless=False \"{filename}\""
 }

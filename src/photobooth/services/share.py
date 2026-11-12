@@ -10,7 +10,7 @@ from ..appconfig import appconfig
 from ..database.database import engine
 from ..database.models import Mediaitem, ShareLimits
 from ..utils.exceptions import WrongMediaTypeError
-from ..utils.printer import PrinterStatus, get_printer_status
+from ..utils.printer import PrinterStatus, get_printer_status, local_lp_queue
 from .base import BaseService
 from .sse import sse_service
 from .sse.sse_ import SseEventTranslateableFrontendNotification
@@ -96,10 +96,22 @@ class ShareService(BaseService):
         action_config_name = action_config.name
         printer_name = action_config.processing.printer_name
 
+        queue = local_lp_queue(action_config.processing.share_command, printer_name)
+        if queue:
+            try:
+                queue_status, _ = get_printer_status(queue)
+            except RuntimeError:
+                queue_status = PrinterStatus.UNKNOWN
+            if queue_status == PrinterStatus.DISABLED:
+                sse_service.dispatch_event(
+                    SseEventTranslateableFrontendNotification(color="negative", message_key="share.print_queue_paused")
+                )
+                raise BlockingIOError(f"CUPS queue {queue} is paused.")
+
         # once unblocked, also check printer availability if configured:
         if action_config.processing.check_if_printer_is_idle:
             try:
-                printer_state, printer_state_raw = get_printer_status(printer_name)
+                printer_state, printer_state_raw = get_printer_status(queue or printer_name)
                 logger.debug(f"checked {printer_state=}, {printer_state_raw=}")
             except Exception as exc:
                 raise RuntimeError(f"Failed getting printer status, error: {exc}! Maybe the printer '{printer_name}' does not exist?") from exc
@@ -170,6 +182,7 @@ class ShareService(BaseService):
             raise RuntimeError(f"Process failed with exit code {exc.returncode}: {exc.stderr or exc.stdout}") from exc
 
         except Exception as exc:
+            sse_service.dispatch_event(SseEventTranslateableFrontendNotification(color="negative", message_key="share.process_failed"))
             # other errors (timeout, OSError, etc.)
             raise RuntimeError(f"Unexpected error running command: {exc}") from exc
 
@@ -178,6 +191,10 @@ class ShareService(BaseService):
             logger.info(f"stdout={completed_process.stdout.decode(errors='replace')}")
             logger.debug(f"stderr={completed_process.stderr.decode(errors='replace')}")
             logger.info(f"command started successfully {mediaitem}")
+            if queue:
+                sse_service.dispatch_event(
+                    SseEventTranslateableFrontendNotification(color="positive", message_key="share.print_accepted")
+                )
 
         updated_current_shares = self.limit_counter_increment(action_config.name)
 

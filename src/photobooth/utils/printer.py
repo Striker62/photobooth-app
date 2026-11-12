@@ -1,3 +1,6 @@
+import os
+import re
+import shlex
 import subprocess
 import sys
 import time
@@ -28,12 +31,30 @@ class PrinterStateChange:
     raw: str
 
 
+def local_lp_queue(command: str, configured_name: str) -> str | None:
+    """Recognise direct CUPS submissions with an explicit destination."""
+    if sys.platform != "linux":
+        return None
+    try:
+        args = shlex.split(command)
+    except ValueError:
+        return None
+    if not args or args[0] not in ("lp", "/usr/bin/lp") or "-d" not in args:
+        return None
+    index = args.index("-d") + 1
+    if index >= len(args):
+        return None
+    name = args[index].replace("{printer_name}", configured_name)
+    return name if re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", name) else None
+
+
 def classify_linux(output):
-    if "idle" in output:
+    output = re.sub(r"^printer \S+ ", "", output.split("\n", 1)[0])
+    if output.startswith("is idle"):
         return PrinterStatus.OK
-    if "disabled" in output:
+    if output.startswith("disabled"):
         return PrinterStatus.DISABLED
-    if "printing" in output:
+    if output.startswith(("now printing", "is printing")):
         return PrinterStatus.BUSY
 
     return PrinterStatus.UNKNOWN
@@ -46,7 +67,8 @@ def get_printer_status_linux(printer_name: str):
             ["lpstat", "-p", printer_name],
             text=True,
             stderr=subprocess.STDOUT,
-            env={"LANG": "C", "LC_ALL": "C"},
+            env={**os.environ, "LANG": "C", "LC_ALL": "C"},
+            timeout=2,
         ).lower()
     except Exception as exc:
         raise RuntimeError(f"Error getting stats for printer '{printer_name}'") from exc
@@ -135,7 +157,7 @@ if __name__ == "__main__":
     PRINTER = "PDF"  # or "Brother_MFC_L2720DW_series" or "Canon_SELPHY_CP1300"
 
     def on_state_change(event: PrinterStateChange):
-        print(f"[STATE CHANGE] {event.printer}: {event.old} → {event.new}")
+        print(f"[STATE CHANGE] {event.printer}: {event.old} â†’ {event.new}")
         print("RAW:", event.raw)
 
     monitor_printer(PRINTER, on_state_change, interval=1.0)

@@ -14,7 +14,7 @@ from picamera2.outputs import FileOutput, PyavOutput  # type: ignore
 
 from ...appconfig import appconfig
 from ...utils.helper import filename_str_time
-from ..config.groups.cameras import GroupCameraPicamera2
+from ..config.groups.cameras import GroupCameraPicamera2, PicameraLightSettings
 from .abstractbackend import AbstractBackend, BackendStats, StillRequest
 
 logger = logging.getLogger("app_picamera2")
@@ -93,6 +93,7 @@ class Picamera2Backend(AbstractBackend):
         self._still_configuration = None
         self._video_configuration = None
         self._switch_configuration_lock = Lock()
+        self._light_trial: PicameraLightSettings | None = None
 
     def __str__(self):
         return f"{self.__class__.__name__}:{self._config.camera_num}"
@@ -253,21 +254,42 @@ class Picamera2Backend(AbstractBackend):
 
         return base
 
-    def _image_controls(self) -> dict:
+    def _image_controls(self, settings: PicameraLightSettings | None = None) -> dict:
+        settings = settings or self._light_trial or self._config
         image_controls: dict = {"ScalerCrop": CAMERA_SCALER_CROP}
-        if self._config.exposure_compensation != 0:
-            image_controls["ExposureValue"] = self._config.exposure_compensation
+        if settings.exposure_compensation != 0:
+            image_controls["ExposureValue"] = settings.exposure_compensation
 
-        mode = self._config.white_balance_mode
+        mode = settings.white_balance_mode
         if mode == "Manual":
             image_controls["AwbEnable"] = False
             image_controls["ColourGains"] = (
-                self._config.white_balance_red_gain,
-                self._config.white_balance_blue_gain,
+                settings.white_balance_red_gain,
+                settings.white_balance_blue_gain,
             )
         else:
             image_controls["AwbMode"] = getattr(controls.AwbModeEnum, mode)
         return image_controls
+
+    @property
+    def light_trial(self) -> PicameraLightSettings | None:
+        return self._light_trial
+
+    def set_light_trial(self, settings: PicameraLightSettings | None):
+        with self._switch_configuration_lock:
+            if not self._picamera2 or self._video_configuration is None or self._still_configuration is None:
+                raise RuntimeError("Camera is not configured yet.")
+            selected = settings if settings is not None else self._config
+            image_controls = self._image_controls(selected)
+            image_controls.pop("ScalerCrop")
+            image_controls.setdefault("ExposureValue", 0.0)
+            image_controls.setdefault("AwbEnable", True)
+            self._picamera2.set_controls(image_controls)
+            for config in (self._video_configuration, self._still_configuration):
+                for key in ("ExposureValue", "AwbMode", "AwbEnable", "ColourGains"):
+                    config["controls"].pop(key, None)
+                config["controls"].update(image_controls)
+            self._light_trial = settings
 
     def setup_resource(self):
         if self._picamera2:

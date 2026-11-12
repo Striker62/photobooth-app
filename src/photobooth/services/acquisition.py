@@ -79,6 +79,17 @@ class AcquisitionService(BaseService):
         except IndexError:
             raise RuntimeError(f"illegal configuration, cannot get backend {index=} for {index_type}") from None
 
+    def get_light_trial(self, index: int):
+        if index >= len(self._backends):
+            return None
+        return getattr(self._backends[index], "light_trial", None)
+
+    def set_light_trial(self, index: int, settings):
+        backend = self._backends[index]
+        if not hasattr(backend, "set_light_trial"):
+            raise RuntimeError("Camera does not support light trials.")
+        backend.set_light_trial(settings)
+
     def stats(self):
         """
         Gather stats from active backends.

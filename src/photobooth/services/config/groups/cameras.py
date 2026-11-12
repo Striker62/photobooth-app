@@ -53,7 +53,34 @@ class GroupCameraVirtual(BaseModelCamera):
     )
 
 
-class GroupCameraPicamera2(BaseModelCamera):
+class PicameraLightSettings(BaseModel):
+    exposure_compensation: float = Field(
+        default=0.0,
+        ge=-3.0,
+        le=3.0,
+        title="Belichtungskorrektur (EV)",
+        description="0 = Standard. Positive Werte hellen auf, negative dunkeln ab. Die Belichtungsautomatik bleibt aktiv.",
+    )
+    white_balance_mode: Literal["Daylight", "Auto", "Cloudy", "Indoor", "Tungsten", "Fluorescent", "Manual"] = Field(
+        default="Daylight",
+        title="Weißabgleich",
+        description="Daylight entspricht der bisherigen Einstellung. Manual verwendet die eingetragenen Rot- und Blauwerte.",
+    )
+    white_balance_red_gain: float = Field(
+        default=1.0, gt=0.0, le=32.0, title="Weißabgleich: Rot-Verstärkung",
+        description="Nur bei Manual. Den gemessenen Rotwert aus dem Belichtungsmesser eintragen.",
+    )
+    white_balance_blue_gain: float = Field(
+        default=1.0, gt=0.0, le=32.0, title="Weißabgleich: Blau-Verstärkung",
+        description="Nur bei Manual. Den gemessenen Blauwert aus dem Belichtungsmesser eintragen.",
+    )
+
+
+class PicameraLightProfile(PicameraLightSettings):
+    name: str = Field(min_length=1, max_length=60)
+
+
+class GroupCameraPicamera2(BaseModelCamera, PicameraLightSettings):
     model_config = ConfigDict(title="Picamera2")
     backend_type: Literal["Picamera2"] = "Picamera2"
 
@@ -109,26 +136,7 @@ class GroupCameraPicamera2(BaseModelCamera):
         description="Framerate of the camera when in video mode or idle.",
         json_schema_extra={"ui_schema_extra": {"slider": True}},
     )
-    exposure_compensation: float = Field(
-        default=0.0,
-        ge=-3.0,
-        le=3.0,
-        title="Belichtungskorrektur (EV)",
-        description="0 = Standard. Positive Werte hellen auf, negative dunkeln ab. Die Belichtungsautomatik bleibt aktiv.",
-    )
-    white_balance_mode: Literal["Daylight", "Auto", "Cloudy", "Indoor", "Tungsten", "Fluorescent", "Manual"] = Field(
-        default="Daylight",
-        title="Weißabgleich",
-        description="Daylight entspricht der bisherigen Einstellung. Manual verwendet die eingetragenen Rot- und Blauwerte.",
-    )
-    white_balance_red_gain: float = Field(
-        default=1.0, gt=0.0, le=32.0, title="Weißabgleich: Rot-Verstärkung",
-        description="Nur bei Manual. Den gemessenen Rotwert aus dem Belichtungsmesser eintragen.",
-    )
-    white_balance_blue_gain: float = Field(
-        default=1.0, gt=0.0, le=32.0, title="Weißabgleich: Blau-Verstärkung",
-        description="Nur bei Manual. Den gemessenen Blauwert aus dem Belichtungsmesser eintragen.",
-    )
+    light_profiles: list[PicameraLightProfile] = Field(default_factory=list, title="Lichtprofile")
     frame_skip_count: int = Field(
         default=2,
         ge=1,
