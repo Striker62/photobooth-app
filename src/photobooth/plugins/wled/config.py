@@ -21,7 +21,7 @@ class Common(BaseModel):
         ge=0,
         le=250,
         title="WLED-Preset bei Druckfehler",
-        description="ID des WLED-Presets fuer eine angehaltene Druckwarteschlange. 0 deaktiviert die Anzeige.",
+        description="ID des WLED-Presets bei Druckstopp, gemeldetem Druckfehler oder getrenntem Selphy-USB-Anschluss. 0 deaktiviert die Anzeige.",
     )
 
     use_separate_thrill_presets: bool = Field(

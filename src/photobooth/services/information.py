@@ -18,7 +18,7 @@ from ..database.models import Cacheditem, Mediaitem, ShareLimits, UsageStats
 from ..database.schemas import ShareLimitsPublic, UsageStatsPublic
 from ..models.genericstats import GenericStats
 from ..plugins import pm as pluggy_pm
-from ..utils.printer import PrinterStatus, get_printer_status, local_lp_queue
+from ..utils.printer import local_lp_queue, local_print_problem
 from ..utils.repeatedtimer import RepeatedTimer
 from ..utils.stoppablethread import StoppableThread
 from .acquisition import AcquisitionService
@@ -160,14 +160,18 @@ class InformationService(BaseService):
         self._paused_print_queues.intersection_update(queues)
         for queue in queues:
             try:
-                status, _ = get_printer_status(queue)
+                problem = local_print_problem(queue)
             except RuntimeError:
                 continue
-            if status == PrinterStatus.DISABLED:
+            if problem:
                 if queue not in self._paused_print_queues:
                     self._paused_print_queues.add(queue)
                     sse_service.dispatch_event(
-                        SseEventTranslateableFrontendNotification(color="negative", message_key="share.print_queue_paused")
+                        SseEventTranslateableFrontendNotification(
+                            color="negative",
+                            message_key="share.print_queue_paused" if problem == "paused" else "share.printer_not_ready",
+                            context_data={"printer_name": queue},
+                        )
                     )
             else:
                 self._paused_print_queues.discard(queue)

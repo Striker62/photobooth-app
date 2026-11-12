@@ -6,6 +6,8 @@ import sys
 import time
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 
 class PrinterStatus(StrEnum):
@@ -60,11 +62,63 @@ def classify_linux(output):
     return PrinterStatus.UNKNOWN
 
 
+def selphy_usb_present(device_uri: str, usb_devices: Path = Path("/sys/bus/usb/devices")) -> bool | None:
+    """Check the USB device belonging to the configured Gutenprint queue."""
+    device = urlsplit(device_uri)
+    if device.scheme != "gutenprint53+usb" or device.netloc != "canon-cp1500" or not usb_devices.is_dir():
+        return None
+
+    serial = unquote(device.path.lstrip("/"))
+    if not serial:
+        return None
+
+    for entry in usb_devices.iterdir():
+        try:
+            vendor = (entry / "idVendor").read_text().strip()
+            product = (entry / "idProduct").read_text().strip()
+            if vendor == "04a9" and product == "3302" and (entry / "serial").read_text().strip() == serial:
+                return True
+        except FileNotFoundError:
+            continue
+        except OSError:
+            return None
+    return False
+
+
+def local_print_problem(printer_name: str) -> str | None:
+    """Report CUPS faults or a missing Selphy USB device."""
+    status, detail = get_printer_status_linux(printer_name)
+    if status == PrinterStatus.DISABLED:
+        return "paused"
+    if re.search(
+        r"paper feed|no paper(?: tray)?|out of paper|paper (?:empty|out|jam)|"
+        r"media-(?:empty|jam|needed)|marker-supply-empty|"
+        r"(?:ink|ribbon|cartridge) (?:empty|out|depleted)|no (?:ink|ribbon|cartridge)|"
+        r"printer open failure|failed to claim interface",
+        detail,
+    ):
+        return "unavailable"
+    try:
+        device = subprocess.check_output(
+            ["lpstat", "-v", printer_name],
+            text=True,
+            stderr=subprocess.STDOUT,
+            env={**os.environ, "LC_ALL": "C"},
+            timeout=2,
+        ).strip()
+        uri = device.removeprefix(f"device for {printer_name}: ")
+        if selphy_usb_present(uri) is False:
+            return "unavailable"
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return None
+
+
 def get_printer_status_linux(printer_name: str):
     try:
         # force english because later parsing.
         status_raw = subprocess.check_output(
-            ["lpstat", "-p", printer_name],
+            ["lpstat", "-p", printer_name, "-l"],
             text=True,
             stderr=subprocess.STDOUT,
             env={**os.environ, "LANG": "C", "LC_ALL": "C"},
@@ -157,7 +211,7 @@ if __name__ == "__main__":
     PRINTER = "PDF"  # or "Brother_MFC_L2720DW_series" or "Canon_SELPHY_CP1300"
 
     def on_state_change(event: PrinterStateChange):
-        print(f"[STATE CHANGE] {event.printer}: {event.old} â†’ {event.new}")
+        print(f"[STATE CHANGE] {event.printer}: {event.old} Ã¢â€ â€™ {event.new}")
         print("RAW:", event.raw)
 
     monitor_printer(PRINTER, on_state_change, interval=1.0)

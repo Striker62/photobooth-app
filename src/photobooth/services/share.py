@@ -10,7 +10,7 @@ from ..appconfig import appconfig
 from ..database.database import engine
 from ..database.models import Mediaitem, ShareLimits
 from ..utils.exceptions import WrongMediaTypeError
-from ..utils.printer import PrinterStatus, get_printer_status, local_lp_queue
+from ..utils.printer import PrinterStatus, get_printer_status, local_lp_queue, local_print_problem
 from .base import BaseService
 from .sse import sse_service
 from .sse.sse_ import SseEventTranslateableFrontendNotification
@@ -99,14 +99,18 @@ class ShareService(BaseService):
         queue = local_lp_queue(action_config.processing.share_command, printer_name)
         if queue:
             try:
-                queue_status, _ = get_printer_status(queue)
+                problem = local_print_problem(queue)
             except RuntimeError:
-                queue_status = PrinterStatus.UNKNOWN
-            if queue_status == PrinterStatus.DISABLED:
+                problem = None
+            if problem:
                 sse_service.dispatch_event(
-                    SseEventTranslateableFrontendNotification(color="negative", message_key="share.print_queue_paused")
+                    SseEventTranslateableFrontendNotification(
+                        color="negative",
+                        message_key="share.print_queue_paused" if problem == "paused" else "share.printer_not_ready",
+                        context_data={"printer_name": queue},
+                    )
                 )
-                raise BlockingIOError(f"CUPS queue {queue} is paused.")
+                raise BlockingIOError(f"CUPS queue {queue} cannot print: {problem}.")
 
         # once unblocked, also check printer availability if configured:
         if action_config.processing.check_if_printer_is_idle:
