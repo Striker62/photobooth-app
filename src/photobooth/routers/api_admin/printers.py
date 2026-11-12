@@ -71,3 +71,18 @@ def resume(queue: str):
     require_queue(queue)
     cups("cupsenable", queue)
     return status(queue)
+
+@router.post("/{queue}/restart")
+def restart_queue(queue: str):
+    current = status(queue)
+    if current["state"] not in ("ok", "disabled"):
+        raise HTTPException(409, "Die Warteschlange kann erst neu gestartet werden, wenn sie bereit oder angehalten ist.")
+    if current["state"] == "ok":
+        cups("cupsdisable", "-r", "Restart requested by Photobooth", queue)
+    try:
+        cups("cupsenable", queue)
+    except HTTPException as exc:
+        raise HTTPException(
+            exc.status_code, f"Die Warteschlange konnte nicht wieder freigegeben werden: {exc.detail}"
+        ) from exc
+    return status(queue)
