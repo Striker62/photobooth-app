@@ -172,7 +172,7 @@ class InformationService(BaseService):
                     self._selphy_next_probe[queue] = now + 10
                     try:
                         if resume_selphy_after_refill(queue):
-                            logger.info("Selphy paper or tray recovered, resumed CUPS queue %s", queue)
+                            logger.info("Selphy paper or ink recovered, resumed CUPS queue %s", queue)
                             problem = None
                     except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as exc:
                         logger.warning("Cannot automatically resume CUPS queue %s: %s", queue, exc)

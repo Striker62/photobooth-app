@@ -117,8 +117,8 @@ class GroupShare(BaseModel):
 
     selphy_auto_resume: bool = Field(
         default=False,
-        title="Selphy nach Papierwechsel automatisch fortsetzen",
-        description="Gibt die CP1500-USB-Warteschlange nach Papier- oder Kassettenfehler frei, sobald der Drucker bereit ist. Erfordert die konfigurierte sudo-Freigabe fuer die Gutenprint-Statusabfrage.",
+        title="Selphy nach Papier- oder Farbbandwechsel automatisch fortsetzen",
+        description="Gibt die CP1500-USB-Warteschlange nach Papier-, Kassetten- oder Farbbandfehler frei, sobald der Drucker bereit ist. Erfordert die konfigurierte sudo-Freigabe fuer die Gutenprint-Statusabfrage.",
     )
     sharing_enabled: bool = Field(
         default=True,

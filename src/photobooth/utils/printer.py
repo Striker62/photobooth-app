@@ -97,10 +97,13 @@ def _printer_uri(printer_name: str) -> str:
 
 
 def resume_selphy_after_refill(printer_name: str) -> bool:
-    """Resume only a CP1500 queue stopped by a paper or tray fault."""
+    """Resume only a CP1500 queue stopped by a refillable supply fault."""
     status, detail = get_printer_status_linux(printer_name)
     if status != PrinterStatus.DISABLED or not re.search(
-        r"^\s*printer error: (?:no paper tray \(03\)|paper feed \(no paper\?\) \(02\))\s*$", detail, re.MULTILINE
+        r"^\s*printer error: (?:no paper tray \(03\)|paper feed \(no paper\?\) \(02\)|"
+        r"ink cassette empty \(06\)|no ink \(07\)|no paper and ink \(09\))\s*$",
+        detail,
+        re.MULTILINE,
     ):
         return False
     uri = _printer_uri(printer_name)
@@ -248,7 +251,7 @@ if __name__ == "__main__":
     PRINTER = "PDF"  # or "Brother_MFC_L2720DW_series" or "Canon_SELPHY_CP1300"
 
     def on_state_change(event: PrinterStateChange):
-        print(f"[STATE CHANGE] {event.printer}: {event.old} Ã¢â€ â€™ {event.new}")
+        print(f"[STATE CHANGE] {event.printer}: {event.old} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ {event.new}")
         print("RAW:", event.raw)
 
     monitor_printer(PRINTER, on_state_change, interval=1.0)
