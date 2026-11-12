@@ -21,7 +21,6 @@ logger = logging.getLogger("app_picamera2")
 
 # Tested IMX477 / Selphy CP1500 calibration, carried over from the v8.6.0 box.
 # Apply to both modes so preview and still capture use the same crop and AWB preset.
-CAMERA_AWB_MODE = controls.AwbModeEnum.Daylight
 CAMERA_SCALER_CROP = (430, 440, 3197, 2160)
 
 
@@ -52,6 +51,8 @@ class Picamera2Stats(BackendStats):
     dgain: float | None = None
     lux: float | None = None
     colour_temperature: int | None = None
+    colour_gain_red: float | None = None
+    colour_gain_blue: float | None = None
     sharpness: int | None = None
 
 
@@ -236,6 +237,7 @@ class Picamera2Backend(AbstractBackend):
             exposure_time = self._metadata.get("ExposureTime", None)
             exposure_time_ms_raw = exposure_time / 1000 if exposure_time is not None else None
 
+            colour_gains = self._metadata.get("ColourGains")
             return Picamera2Stats(
                 **base.__dict__,
                 exposure_time_ms=self._round_none(exposure_time_ms_raw, 1),
@@ -244,10 +246,28 @@ class Picamera2Backend(AbstractBackend):
                 dgain=self._round_none(self._metadata.get("DigitalGain", None), 1),
                 lux=self._round_none(self._metadata.get("Lux", None), 1),
                 colour_temperature=self._metadata.get("ColourTemperature", None),
+                colour_gain_red=self._round_none(colour_gains[0], 3) if colour_gains is not None else None,
+                colour_gain_blue=self._round_none(colour_gains[1], 3) if colour_gains is not None else None,
                 sharpness=self._metadata.get("FocusFoM", None),
             )
 
         return base
+
+    def _image_controls(self) -> dict:
+        image_controls: dict = {"ScalerCrop": CAMERA_SCALER_CROP}
+        if self._config.exposure_compensation != 0:
+            image_controls["ExposureValue"] = self._config.exposure_compensation
+
+        mode = self._config.white_balance_mode
+        if mode == "Manual":
+            image_controls["AwbEnable"] = False
+            image_controls["ColourGains"] = (
+                self._config.white_balance_red_gain,
+                self._config.white_balance_blue_gain,
+            )
+        else:
+            image_controls["AwbMode"] = getattr(controls.AwbModeEnum, mode)
+        return image_controls
 
     def setup_resource(self):
         if self._picamera2:
@@ -265,6 +285,8 @@ class Picamera2Backend(AbstractBackend):
         self._picamera2 = Picamera2(camera_num=self._config.camera_num, tuning=tuning, allocator=PersistentAllocator())
         assert self._picamera2
 
+        image_controls = self._image_controls()
+
         # config HQ mode (used for picture capture and live preview on countdown)
         self._still_configuration = self._picamera2.create_still_configuration(
             main={"size": (self._config.CAPTURE_CAM_RESOLUTION_WIDTH, self._config.CAPTURE_CAM_RESOLUTION_HEIGHT)},
@@ -274,8 +296,7 @@ class Picamera2Backend(AbstractBackend):
             display="lores",
             controls={
                 "FrameRate": self._config.framerate_still_mode,
-                "AwbMode": CAMERA_AWB_MODE,
-                "ScalerCrop": CAMERA_SCALER_CROP,
+                **image_controls,
             },
             transform=self._transform,
         )
@@ -289,8 +310,7 @@ class Picamera2Backend(AbstractBackend):
             display="lores",
             controls={
                 "FrameRate": self._config.framerate_video_mode,
-                "AwbMode": CAMERA_AWB_MODE,
-                "ScalerCrop": CAMERA_SCALER_CROP,
+                **image_controls,
             },
             transform=self._transform,
         )
