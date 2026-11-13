@@ -66,6 +66,13 @@ class PicameraLightSettings(BaseModel):
         title="Weißabgleich",
         description="Daylight entspricht der bisherigen Einstellung. Manual verwendet die eingetragenen Rot- und Blauwerte.",
     )
+    auto_blue_correction: float = Field(
+        default=0.0,
+        ge=-15.0,
+        le=15.0,
+        title="Auto: Blaukorrektur (%)",
+        description="Nur im Modus Auto. Positive Werte wirken kuehler, negative waermer.",
+    )
     white_balance_red_gain: float = Field(
         default=1.0, gt=0.0, le=32.0, title="Weißabgleich: Rot-Verstärkung",
         description="Nur bei Manual. Den gemessenen Rotwert aus dem Belichtungsmesser eintragen.",

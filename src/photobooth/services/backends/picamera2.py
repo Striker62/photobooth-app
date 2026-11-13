@@ -11,6 +11,7 @@ from picamera2 import Picamera2  # type: ignore
 from picamera2.allocators import PersistentAllocator  # type: ignore
 from picamera2.encoders import H264Encoder, MJPEGEncoder, Quality  # type: ignore
 from picamera2.outputs import FileOutput, PyavOutput  # type: ignore
+from PIL import Image
 
 from ...appconfig import appconfig
 from ...utils.helper import filename_str_time
@@ -24,6 +25,22 @@ logger = logging.getLogger("app_picamera2")
 CAMERA_SCALER_CROP = (430, 440, 3197, 2160)
 
 
+def correct_jpeg_blue(jpeg: bytes, correction: float, quality: int) -> bytes:
+    """Adjust blue in the rendered JPEG while preserving image metadata."""
+    if not correction:
+        return jpeg
+
+    factor = 1 + correction / 100
+    blue_lut = [min(255, round(value * factor)) for value in range(256)]
+    identity = list(range(256))
+    with Image.open(io.BytesIO(jpeg)) as original:
+        metadata = {key: original.info[key] for key in ("exif", "icc_profile", "dpi") if key in original.info}
+        with original.convert("RGB").point(identity + identity + blue_lut) as corrected:
+            output = io.BytesIO()
+            corrected.save(output, format="JPEG", quality=quality, **metadata)
+            return output.getvalue()
+
+
 class PicamLoresData(io.BufferedIOBase):
     """Lores data class used for streaming.
     Used in hardware accelerated MJPEGEncoder
@@ -32,12 +49,15 @@ class PicamLoresData(io.BufferedIOBase):
         io (_type_): _description_
     """
 
-    def __init__(self, lores_data):
+    def __init__(self, lores_data, blue_correction):
         self.lores_data = lores_data
+        self.blue_correction = blue_correction
 
     def write(self, buf) -> int:
+        correction = self.blue_correction()
+        frame = correct_jpeg_blue(buf, correction, 90) if correction else buf
         with self.lores_data[0].condition:
-            self.lores_data[0].data = buf
+            self.lores_data[0].data = frame
             self.lores_data[0].condition.notify_all()
 
         return len(buf)
@@ -209,7 +229,7 @@ class Picamera2Backend(AbstractBackend):
                 raise exc
             else:
                 self._picamera2.start_encoder(
-                    self._mjpeg_encoder, FileOutput(PicamLoresData(self._lores_data)), quality=Quality[self._config.videostream_quality]
+                    self._mjpeg_encoder, FileOutput(PicamLoresData(self._lores_data, self._auto_blue_correction)), quality=Quality[self._config.videostream_quality]
                 )
 
         logger.debug("switch_mode finished")
@@ -253,6 +273,10 @@ class Picamera2Backend(AbstractBackend):
             )
 
         return base
+
+    def _auto_blue_correction(self) -> float:
+        settings = self._light_trial or self._config
+        return settings.auto_blue_correction if settings.white_balance_mode == "Auto" else 0.0
 
     def _image_controls(self, settings: PicameraLightSettings | None = None) -> dict:
         settings = settings or self._light_trial or self._config
@@ -401,6 +425,10 @@ class Picamera2Backend(AbstractBackend):
                         )
                         # https://github.com/raspberrypi/picamera2/issues/1125#issuecomment-2387829290 fixed now, so use simple capture_file again
                         _ = self._picamera2.capture_file(filepath, wait=1.5)  # type: ignore
+                        correction = self._auto_blue_correction()
+                        if correction:
+                            filepath.write_bytes(correct_jpeg_blue(filepath.read_bytes(), correction, self._config.original_still_quality))
+
 
                     with req.condition:
                         req.result_file = filepath
