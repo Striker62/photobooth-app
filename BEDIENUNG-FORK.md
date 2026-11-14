@@ -48,6 +48,17 @@ Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Vid
 
 Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Zum Deaktivieren diese Datei umbenennen und die Gästeansicht neu laden. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
 
+## Sprachauslöser
+
+Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während einer Foto- oder Videoaufnahme pausiert die Erkennung. Das Mikrofon des Telefonhörers bleibt separat.
+
+1. Das vorhandene deutsche Vosk-Modell aus dem Backup (`voicetrigger/model`) nach `~/VoiceTrigger/model` auf den Pi kopieren. Direkt darin müssen unter anderem die Unterordner `am` und `conf` liegen.
+2. Als Benutzer `pi` mit `pipx inject photobooth-app vosk` die Spracherkennung in die App-Umgebung installieren. Das USB-Mikrofon wie im Abschnitt Videogästebuch einrichten.
+3. In der Admin-Konfiguration unter den Plugins **Sprachauslöser** aktivieren, speichern und die Photobooth-Dienste neu laden.
+4. In der Gästeansicht **„Kamera Foto“** sagen. Alternativ **„Kamera“** sagen und innerhalb von vier Sekunden **„Foto“**. Das löst die erste Fotoaktion aus. Beide Wörter sind in der Plugin-Konfiguration einstellbar.
+
+Die Erkennung läuft lokal. Die frühere frei konfigurierbare Zuordnung zu Druck- und anderen Aktionen ist in dieser Version nicht enthalten.
+
 ## Update prüfen
 
 Unter **Systeminformationen → App-Version** auf den grünen Update-Pfeil klicken. Den angezeigten Befehl als Benutzer `pi` im Terminal auf dem Raspberry Pi ausführen. Anschließend das Admin Center mit **Strg + F5** neu laden.

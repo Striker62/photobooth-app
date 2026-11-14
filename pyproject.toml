@@ -72,6 +72,7 @@ dependencies = [
 photobooth = "photobooth.__main__:main"
 
 [project.entry-points.photobooth11]
+voicetrigger = 'photobooth.plugins.voicetrigger.voicetrigger'
 commander = 'photobooth.plugins.commander.commander'
 gpio_lights = 'photobooth.plugins.gpio_lights.gpio_lights'
 wled = 'photobooth.plugins.wled.wled'

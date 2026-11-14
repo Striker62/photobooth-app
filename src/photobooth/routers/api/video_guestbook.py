@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
@@ -13,23 +12,14 @@ from fastapi.responses import FileResponse
 
 from ...container import container
 from ...utils.exceptions import ProcessMachineOccupiedError
+from ...utils.video_microphone import ROOT, microphone, microphone_lock
 
 router = APIRouter(prefix="/video-guestbook", tags=["video-guestbook"])
-ROOT = Path.home() / "VideoGuestbook"
 PENDING = ROOT / "pending"
 VIDEOS = ROOT / "recordings"
 RECORD_SECONDS = 15
 logger = logging.getLogger(__name__)
 draft_lock = threading.Lock()
-
-
-def microphone() -> str:
-    if sys.platform != "linux":
-        return ""
-    try:
-        return (ROOT / "microphone").read_text(encoding="utf-8").strip()
-    except FileNotFoundError:
-        return ""
 
 
 @router.get("")
@@ -47,7 +37,7 @@ def record():
     audio = PENDING / f"{token}.wav"
     output = PENDING / f"{token}.mp4"
     try:
-        with container.processing_service.reserve_capture() as acquisition:
+        with container.processing_service.reserve_capture() as acquisition, microphone_lock:
             with draft_lock:
                 PENDING.mkdir(parents=True, exist_ok=True, mode=0o700)
                 for path in PENDING.iterdir():
