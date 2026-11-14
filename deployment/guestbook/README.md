@@ -3,8 +3,10 @@
 Die Befehle als derselbe Benutzer ausführen, unter dem Photobooth läuft (hier `pi`). Die Dateien aus diesem Verzeichnis auf dem Pi in einem Git-Checkout öffnen.
 
 ```bash
-sudo apt install python3-gpiozero python3-lgpio python3-sounddevice alsa-utils
+sudo apt install python3-gpiozero python3-lgpio python3-venv libportaudio2 alsa-utils
 install -d -m 700 ~/AudioGuestbook ~/AudioGuestbook/recordings
+python3 -m venv --system-site-packages ~/AudioGuestbook/.venv
+~/AudioGuestbook/.venv/bin/python -m pip install sounddevice
 install -m 600 guestbook.py ~/AudioGuestbook/
 install -D -m 644 photobooth-guestbook.service ~/.config/systemd/user/photobooth-guestbook.service
 ```
@@ -13,7 +15,7 @@ Die bestehende GPIO-Verdrahtung nutzt **BCM 17** für die Wählscheibe und **BCM
 
 Begrüßung und Signalton als `~/AudioGuestbook/greeting.wav` und `~/AudioGuestbook/beep.wav` bereitstellen. Eine vorhandene MP3-Begrüßung kannst du mit `ffmpeg -i begruessung.mp3 ~/AudioGuestbook/greeting.wav` umwandeln.
 
-Bei Bedarf `~/AudioGuestbook/audio.env` anlegen. Geräte mit `/usr/bin/python3 -m sounddevice` (Eingang) und `aplay -L` (Ausgang) ermitteln. Beispielwerte durch die lokal ermittelten Gerätenamen ersetzen. Ohne Datei verwendet der Dienst die Standardgeräte.
+Bei Bedarf `~/AudioGuestbook/audio.env` anlegen. Geräte mit `~/AudioGuestbook/.venv/bin/python -m sounddevice` (Eingang) und `aplay -L` (Ausgang) ermitteln. Beispielwerte durch die lokal ermittelten Gerätenamen ersetzen. Ohne Datei verwendet der Dienst die Standardgeräte.
 
 ```ini
 GUESTBOOK_INPUT="USB Audio Device"
