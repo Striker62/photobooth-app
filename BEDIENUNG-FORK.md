@@ -38,7 +38,7 @@ Hörer abheben, Begrüßung abwarten und **1** wählen. Nach dem Signalton sprec
 
 Unter **Admin Center → Übersichtsseite → Audiogästebuch** siehst du den Dienststatus. Mit **Aktualisieren** holst du neue Aufnahmen in die Liste. Wähle **Anhören**, **Download** oder **Löschen**. Löschen ist endgültig.
 
-Der Telefondienst startet unabhängig von der Fotobox. Für die erstmalige Einrichtung auf dem Pi und den Import alter Aufnahmen siehe [Audiogästebuch einrichten](deployment/guestbook/README.md).
+Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestätige. Das stoppt den Dienst und schaltet seinen Autostart aus. Gespeicherte Aufnahmen kannst du weiterhin verwalten. **Telefon aktivieren** startet den Dienst wieder und schaltet den Autostart ein. Für die erstmalige Einrichtung auf dem Pi und den Import alter Aufnahmen siehe [Audiogästebuch einrichten](deployment/guestbook/README.md).
 
 ## Update prüfen
 
