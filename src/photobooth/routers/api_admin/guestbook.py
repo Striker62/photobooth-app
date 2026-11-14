@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/guestbook", tags=["guestbook"])
 ROOT = Path.home() / "AudioGuestbook"
+GREETING = ROOT / "greeting.wav"
 RECORDINGS = ROOT / "recordings"
 RECORDING_NAME = re.compile(r"(?:[0-9]{8}-[0-9]{6}-[0-9]{6}|gaestebuch_eintrag[0-9]+)\.wav")
 UNIT = "photobooth-guestbook.service"
@@ -34,7 +35,20 @@ def status():
         for path in sorted(RECORDINGS.iterdir(), reverse=True):
             if RECORDING_NAME.fullmatch(path.name) and path.is_file() and not path.is_symlink():
                 recordings.append(path.name)
-    return {"state": state, "enabled": unit_state == "enabled", "installed": unit_state in ("enabled", "disabled"), "recordings": recordings}
+    return {
+        "state": state,
+        "enabled": unit_state == "enabled",
+        "installed": unit_state in ("enabled", "disabled"),
+        "has_greeting": GREETING.is_file() and not GREETING.is_symlink(),
+        "recordings": recordings,
+    }
+
+
+@router.get("/greeting")
+def greeting():
+    if not GREETING.is_file() or GREETING.is_symlink():
+        raise HTTPException(404, "Keine Ansage hinterlegt.")
+    return FileResponse(GREETING, media_type="audio/wav", headers={"Cache-Control": "no-store"})
 
 
 @router.post("/service/{action}")
