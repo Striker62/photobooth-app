@@ -24,6 +24,8 @@ Die folgenden Funktionen ergänzen die Photobooth-App 9.0.0 im Striker62-Fork. D
 - **Automatisches Fortsetzen:** Optional in der Druck-/Teilen-Konfiguration **Selphy nach Papier- oder Farbbandwechsel automatisch fortsetzen** aktivieren. Die Funktion braucht die lokale Freigabe für die Gutenprint-Statusabfrage. Falls die Warteschlange nach dem Nachfüllen angehalten bleibt, **Fortsetzen** verwenden.
 - **Bluetooth-Buzzer:** Bei **Getrennt** auf **Buzzer verbinden** klicken. Bei **Kein Buzzer gekoppelt** zuerst den **photobooth-app buzzer** über das Bluetooth-Menü des Pi koppeln. Falls er sich mit Windows verbindet, dort Bluetooth vorübergehend ausschalten. In der Gästeansicht die Fototaste testen. Der Buzzer sendet `f` für Foto, `c` für Collage und `p` für Drucken. Die Aktion richtet sich nach der Tastenzuordnung der Fotobox.
 
+**Buzzer verbindet kurz und trennt sich wieder:** Wenn der Pi per LAN erreichbar ist und sein WLAN aktiv ist, schalte WLAN testweise mit `nmcli radio wifi off` aus. Versuche dann erneut, den Buzzer zu verbinden oder bei der Ersteinrichtung zu koppeln. Schalte WLAN anschließend mit `nmcli radio wifi on` wieder ein. Klappt die Verbindung bei ausgeschaltetem WLAN, ist das ein Hinweis auf eine mögliche Störung zwischen WLAN und Bluetooth. [Bericht zum Bluetooth-Fehler 0x3e](https://github.com/RPi-Distro/bluez-firmware/issues/12)
+
 Eine neue SD-Karte oder einen neuen USB-Drucker richtest du mit der [Selphy-Installationsanleitung](deployment/selphy/README.md) ein.
 
 ## WLED bei Druckstörungen
