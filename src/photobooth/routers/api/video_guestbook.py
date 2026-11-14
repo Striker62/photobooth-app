@@ -77,7 +77,7 @@ def record(device, acquisition, reservation):
         VIDEOS.mkdir(parents=True, exist_ok=True, mode=0o700)
         with microphone_lock:
             started = datetime.now()
-            video = acquisition.start_recording()
+            video = acquisition.start_recording(photo_lighting=True)
             try:
                 with subprocess.Popen(
                     ["arecord", "-q", "-D", device, "-t", "raw", "-f", "S16_LE", "-r", "48000", "-c", "1"],

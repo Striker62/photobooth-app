@@ -156,14 +156,19 @@ class AcquisitionService(BaseService):
             # ensure even if failed, the wled is set to standby again
             pluggy_pm.hook.acq_after_shot()
 
-    def start_recording(self, video_framerate: int = 25) -> Path:
+    def start_recording(self, video_framerate: int = 25, *, photo_lighting: bool = False) -> Path:
         assert self._recorder, "service needs to be started before using the recorder"
 
         pluggy_pm.hook.acq_before_shot()
-        pluggy_pm.hook.acq_before_get_video()
-
-        file = self._recorder.start_recording(video_framerate)
-        return file
+        try:
+            if photo_lighting:
+                pluggy_pm.hook.acq_before_get_still()
+            else:
+                pluggy_pm.hook.acq_before_get_video()
+            return self._recorder.start_recording(video_framerate)
+        except Exception:
+            pluggy_pm.hook.acq_after_shot()
+            raise
 
     def stop_recording(self):
         assert self._recorder, "service needs to be started before using the recorder"

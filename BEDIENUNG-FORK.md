@@ -48,6 +48,8 @@ Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera 
 
 Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Video**. Dort kannst du sie ansehen, herunterladen und löschen. Auf dem Pi liegen sie unter `~/VideoGuestbook/recordings/`.
 
+Während der Aufnahme nutzt WLED das gleiche weiße Preset wie beim Foto. Beim Stoppen wechselt WLED zurück zum Standby-Preset. Wenn `c` nichts auslöst, zuerst den Videobutton auf der Gäste-Startseite testen. Prüfe danach in einem Texteditor auf dem Pi, ob die entsprechende Buzzertaste tatsächlich ein `c` sendet.
+
 Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Unter **Admin Center → Audiogästebuch → Video** kannst du neue Videogrüße unabhängig vom Sprachauslöser deaktivieren. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
 
 Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` und `PB2026-11-14-17-05-09.mp4`. Der Name enthält die lokale Startzeit der Aufnahme. Bei einer Namenskollision kommen sechs Stellen für die Mikrosekunden hinzu. Ältere Aufnahmen behalten ihre Dateinamen und bleiben im Admin Center verfügbar.
