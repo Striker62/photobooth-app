@@ -26,11 +26,20 @@ deadline = 0.0
 voice_stop_listener = None
 
 
+def recording_seconds() -> int:
+    try:
+        seconds = int((ROOT / "duration").read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return RECORD_SECONDS
+    return min(300, max(1, seconds))
+
+
 @router.get("")
 def settings():
     with lock:
         return {
             "enabled": bool(microphone()) and not (ROOT / "disabled").exists(),
+            "show_button": not (ROOT / "hide-button").exists(),
             "state": state,
             "remaining": max(0, deadline - time.monotonic()),
         }
@@ -58,14 +67,14 @@ def toggle():
         state = "countdown"
         deadline = time.monotonic() + COUNTDOWN_SECONDS
         try:
-            threading.Thread(target=record, args=(device, acquisition, reservation), daemon=True).start()
+            threading.Thread(target=record, args=(device, acquisition, reservation, recording_seconds()), daemon=True).start()
         except RuntimeError:
             reservation.__exit__(None, None, None)
             state = "idle"
             raise
 
 
-def record(device, acquisition, reservation):
+def record(device, acquisition, reservation, seconds):
     global state, deadline
     token = uuid4().hex
     audio = ROOT / f".{token}.wav"
@@ -89,7 +98,7 @@ def record(device, acquisition, reservation):
                     listen = voice_stop_listener(48000) if voice_stop_listener else None
                     with lock:
                         state = "recording"
-                        deadline = time.monotonic() + RECORD_SECONDS
+                        deadline = time.monotonic() + seconds
                     try:
                         while recorder.poll() is None and time.monotonic() < deadline and not stop.is_set():
                             if selector.select(timeout=0.05):

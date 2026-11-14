@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from ..api.video_guestbook import ROOT as VIDEO_ROOT
-from ..api.video_guestbook import VIDEOS, microphone
+from ..api.video_guestbook import VIDEOS, lock as video_lock, microphone, recording_seconds
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/guestbook", tags=["guestbook"])
 ROOT = Path.home() / "AudioGuestbook"
@@ -104,7 +105,32 @@ def videos():
 
 @router.get("/video-settings")
 def video_settings():
-    return {"enabled": not (VIDEO_ROOT / "disabled").exists(), "configured": bool(microphone())}
+    return {
+        "enabled": not (VIDEO_ROOT / "disabled").exists(),
+        "configured": bool(microphone()),
+        "show_button": not (VIDEO_ROOT / "hide-button").exists(),
+        "seconds": recording_seconds(),
+    }
+
+
+class VideoControls(BaseModel):
+    show_button: bool
+    seconds: int = Field(ge=1, le=300)
+
+
+@router.put("/video-settings")
+def set_video_controls(controls: VideoControls):
+    with video_lock:
+        VIDEO_ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
+        temporary = VIDEO_ROOT / "duration.tmp"
+        temporary.write_text(str(controls.seconds), encoding="utf-8")
+        temporary.replace(VIDEO_ROOT / "duration")
+        marker = VIDEO_ROOT / "hide-button"
+        if controls.show_button:
+            marker.unlink(missing_ok=True)
+        else:
+            marker.touch()
+        return video_settings()
 
 
 @router.put("/video-settings/{enabled}")
