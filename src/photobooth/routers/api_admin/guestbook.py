@@ -6,7 +6,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from ..api.video_guestbook import VIDEOS
+from ..api.video_guestbook import ROOT as VIDEO_ROOT
+from ..api.video_guestbook import VIDEOS, microphone
 
 router = APIRouter(prefix="/guestbook", tags=["guestbook"])
 ROOT = Path.home() / "AudioGuestbook"
@@ -97,6 +98,22 @@ def videos():
         for path in VIDEOS.glob("*.mp4")
         if re.fullmatch(r"[0-9a-f]{32}\.mp4", path.name) and not path.is_symlink() and path.is_file()
     ]
+
+
+@router.get("/video-settings")
+def video_settings():
+    return {"enabled": not (VIDEO_ROOT / "disabled").exists(), "configured": bool(microphone())}
+
+
+@router.put("/video-settings/{enabled}")
+def set_video_enabled(enabled: bool):
+    VIDEO_ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
+    marker = VIDEO_ROOT / "disabled"
+    if enabled:
+        marker.unlink(missing_ok=True)
+    else:
+        marker.touch()
+    return video_settings()
 
 
 def video_path(name: str):

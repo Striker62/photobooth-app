@@ -42,15 +42,17 @@ Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestäti
 
 ## Videogästebuch
 
-Das Videogästebuch erscheint in der Gästeansicht, sobald ein Mikrofon am Pi dafür eingerichtet ist. **Videogruß aufnehmen → Aufnahme starten** wählen. Nach drei Sekunden Countdown nimmt die Box 15 Sekunden mit Bild und Ton auf. Danach den Gruß ansehen, neu aufnehmen oder speichern. Während der Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
+Der Videobutton erscheint auf dem vorhandenen Livebild, wenn das Mikrofon eingerichtet und das Videogästebuch aktiv ist. Einmal den Button drücken oder am Buzzer **c** drücken. Nach drei Sekunden startet die Aufnahme mit Bild und Ton. Noch einmal drücken, um zu stoppen und direkt zu speichern. Nach spätestens 15 Sekunden speichert die Box automatisch. Während Countdown und Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
+
+Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera Video“**. Das Wort **Video** ist in der Plugin-Konfiguration einstellbar. Für einen GPIO-Taster den freien BCM-Pin als einzige Zeile in `~/VideoGuestbook/gpio` schreiben, GPIO-Eingabe aktivieren und Dienste neu laden. Beim Einsatz von **c** für Video die alte Collage-Tastenzuordnung entfernen.
 
 Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Video**. Dort kannst du sie ansehen, herunterladen und löschen. Auf dem Pi liegen sie unter `~/VideoGuestbook/recordings/`.
 
-Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Zum Deaktivieren diese Datei umbenennen und die Gästeansicht neu laden. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
+Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Unter **Admin Center → Audiogästebuch → Video** kannst du neue Videogrüße unabhängig vom Sprachauslöser deaktivieren. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
 
 ## Sprachauslöser
 
-Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während einer Foto- oder Videoaufnahme pausiert die Erkennung. Das Mikrofon des Telefonhörers bleibt separat.
+Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während eines Videogrußes erkennt er den Stoppbefehl direkt aus dem aufgenommenen Ton. Das Mikrofon des Telefonhörers bleibt separat.
 
 1. Das vorhandene deutsche Vosk-Modell aus dem Backup (`voicetrigger/model`) nach `~/VoiceTrigger/model` auf den Pi kopieren. Direkt darin müssen unter anderem die Unterordner `am` und `conf` liegen.
 2. Als Benutzer `pi` mit `pipx inject photobooth-app vosk` die Spracherkennung in die App-Umgebung installieren. Das USB-Mikrofon wie im Abschnitt Videogästebuch einrichten.

@@ -1,100 +1,138 @@
 import logging
 import os
-import re
+import selectors
 import subprocess
 import threading
 import time
-from pathlib import Path
+import wave
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
 
 from ...container import container
 from ...utils.exceptions import ProcessMachineOccupiedError
 from ...utils.video_microphone import ROOT, microphone, microphone_lock
 
 router = APIRouter(prefix="/video-guestbook", tags=["video-guestbook"])
-PENDING = ROOT / "pending"
 VIDEOS = ROOT / "recordings"
 RECORD_SECONDS = 15
+COUNTDOWN_SECONDS = 3
 logger = logging.getLogger(__name__)
-draft_lock = threading.Lock()
+lock = threading.Lock()
+stop = threading.Event()
+state = "idle"
+deadline = 0.0
+voice_stop_listener = None
 
 
 @router.get("")
 def settings():
-    return {"enabled": bool(microphone()), "seconds": RECORD_SECONDS}
+    with lock:
+        return {
+            "enabled": bool(microphone()) and not (ROOT / "disabled").exists(),
+            "state": state,
+            "remaining": max(0, deadline - time.monotonic()),
+        }
 
 
-@router.post("/record")
-def record():
-    device = microphone()
-    if not device:
-        raise HTTPException(404, "Videogästebuch ist deaktiviert.")
+@router.post("/toggle")
+def toggle():
+    global state, deadline
+    with lock:
+        if state == "recording":
+            stop.set()
+            state = "saving"
+            return
+        if state != "idle":
+            return
+        device = microphone()
+        if not device or (ROOT / "disabled").exists():
+            raise HTTPException(409, "Videogästebuch ist deaktiviert.")
+        reservation = container.processing_service.reserve_capture()
+        try:
+            acquisition = reservation.__enter__()
+        except ProcessMachineOccupiedError as exc:
+            raise HTTPException(409, "Die Kamera ist gerade belegt.") from exc
+        stop.clear()
+        state = "countdown"
+        deadline = time.monotonic() + COUNTDOWN_SECONDS
+        try:
+            threading.Thread(target=record, args=(device, acquisition, reservation), daemon=True).start()
+        except RuntimeError:
+            reservation.__exit__(None, None, None)
+            state = "idle"
+            raise
+
+
+def record(device, acquisition, reservation):
+    global state, deadline
     token = uuid4().hex
+    audio = ROOT / f".{token}.wav"
+    output = ROOT / f".{token}.mp4"
     video = None
-    audio = PENDING / f"{token}.wav"
-    output = PENDING / f"{token}.mp4"
+    outcome = "saved"
     try:
-        with container.processing_service.reserve_capture() as acquisition, microphone_lock:
-            with draft_lock:
-                PENDING.mkdir(parents=True, exist_ok=True, mode=0o700)
-                for path in PENDING.iterdir():
-                    if time.time() - path.stat().st_mtime > 1800:
-                        path.unlink(missing_ok=True)
+        time.sleep(max(0, deadline - time.monotonic()))
+        VIDEOS.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with microphone_lock:
             video = acquisition.start_recording()
             try:
-                subprocess.run(
-                    ["arecord", "-q", "-D", device, "-f", "S16_LE", "-r", "48000", "-c", "1",
-                     "-d", str(RECORD_SECONDS), str(audio)],
-                    stdin=subprocess.DEVNULL, capture_output=True, check=True, timeout=RECORD_SECONDS + 5,
-                )
+                with subprocess.Popen(
+                    ["arecord", "-q", "-D", device, "-t", "raw", "-f", "S16_LE", "-r", "48000", "-c", "1"],
+                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, bufsize=0,
+                ) as recorder, selectors.DefaultSelector() as selector, wave.open(str(audio), "wb") as wav:
+                    assert recorder.stdout is not None
+                    selector.register(recorder.stdout, selectors.EVENT_READ)
+                    wav.setparams((1, 2, 48000, 0, "NONE", "not compressed"))
+                    listen = voice_stop_listener(48000) if voice_stop_listener else None
+                    with lock:
+                        state = "recording"
+                        deadline = time.monotonic() + RECORD_SECONDS
+                    try:
+                        while recorder.poll() is None and time.monotonic() < deadline and not stop.is_set():
+                            if selector.select(timeout=0.05):
+                                data = recorder.stdout.read(8192)
+                                if not data:
+                                    break
+                                wav.writeframesraw(data)
+                                if listen and listen(data):
+                                    stop.set()
+                        if recorder.poll() is not None:
+                            raise RuntimeError("Audio recorder exited early")
+                    finally:
+                        if recorder.poll() is None:
+                            recorder.terminate()
+                            try:
+                                recorder.wait(timeout=3)
+                            except subprocess.TimeoutExpired:
+                                recorder.kill()
+                                raise
             finally:
                 acquisition.stop_recording()
+        with lock:
+            state = "saving"
         subprocess.run(
             ["ffmpeg", "-nostdin", "-loglevel", "error", "-i", str(video), "-i", str(audio),
              "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac",
              "-shortest", "-movflags", "+faststart", str(output)],
-            capture_output=True, check=True, timeout=30,
+            check=True, timeout=30,
         )
         os.chmod(output, 0o600)
-    except ProcessMachineOccupiedError as exc:
-        raise HTTPException(409, "Die Kamera ist gerade belegt.") from exc
-    except Exception as exc:
-        output.unlink(missing_ok=True)
+        output.rename(VIDEOS / f"{token}.mp4")
+    except Exception:
+        outcome = "error"
         logger.exception("Video guestbook recording failed")
-        raise HTTPException(503, "Videogruß konnte nicht aufgenommen werden. Kamera und Mikrofon prüfen.") from exc
     finally:
-        audio.unlink(missing_ok=True)
-        if video is not None:
-            video.unlink(missing_ok=True)
-    return {"token": token}
-
-
-def draft(token: str) -> Path:
-    if not re.fullmatch(r"[0-9a-f]{32}", token):
-        raise HTTPException(404)
-    path = PENDING / f"{token}.mp4"
-    if not path.is_file() or time.time() - path.stat().st_mtime > 1800:
-        raise HTTPException(404, "Videovorschau ist abgelaufen.")
-    return path
-
-
-@router.get("/draft/{token}")
-def preview(token: str):
-    return FileResponse(draft(token), media_type="video/mp4", headers={"Cache-Control": "no-store"})
-
-
-@router.post("/draft/{token}", status_code=204)
-def save(token: str):
-    with draft_lock:
-        path = draft(token)
-        VIDEOS.mkdir(parents=True, exist_ok=True, mode=0o700)
-        path.rename(VIDEOS / path.name)
-
-
-@router.delete("/draft/{token}", status_code=204)
-def discard(token: str):
-    with draft_lock:
-        draft(token).unlink()
+        try:
+            audio.unlink(missing_ok=True)
+            output.unlink(missing_ok=True)
+            if video is not None:
+                video.unlink(missing_ok=True)
+        finally:
+            reservation.__exit__(None, None, None)
+            with lock:
+                state = outcome
+                deadline = time.monotonic() + 3
+            time.sleep(3)
+            with lock:
+                state = "idle"

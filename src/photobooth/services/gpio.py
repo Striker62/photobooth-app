@@ -176,6 +176,14 @@ class GpioService(BaseService):
             self._processing_service.abort_process()
 
     def init_io(self):
+        from ..routers.api import video_guestbook
+
+        pin_file = video_guestbook.ROOT / "gpio"
+        if pin_file.is_file():
+            video_button = PinHandler(pin_file.read_text(encoding="utf-8").strip(), hold_time=0.6)
+            if video_button:
+                video_button.register_callback("pressed", video_guestbook.toggle)
+
         shutdown_btn = PinHandler(self._config.gpio_pin_shutdown, hold_time=HOLD_TIME_SHUTDOWN)
         if shutdown_btn:
             shutdown_btn.register_callback("longpress", self._handle_shutdown)

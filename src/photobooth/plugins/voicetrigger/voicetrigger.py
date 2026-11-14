@@ -23,6 +23,7 @@ class VoiceTriggerConfig(BaseConfig):
     enabled: bool = False
     wake_word: str = "kamera"
     photo_word: str = "foto"
+    video_word: str = "video"
 
 
 class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
@@ -49,6 +50,9 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
 
     @hookimpl
     def stop(self):
+        from ...routers.api import video_guestbook
+
+        video_guestbook.voice_stop_listener = None
         self._stop.set()
         if self._thread:
             self._thread.join(timeout=3)
@@ -58,27 +62,45 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
             from vosk import KaldiRecognizer, Model
 
             from ...container import container
+            from ...routers.api import video_guestbook
 
             wake = " ".join(self._config.wake_word.lower().split())
             command = " ".join(self._config.photo_word.lower().split())
             if not wake or not command or wake == command:
                 raise ValueError("Set distinct wake and photo phrases")
             model = Model(str(Path.home() / "VoiceTrigger" / "model"))
+            video_phrase = f"{wake} {' '.join(self._config.video_word.lower().split())}"
+
+            def stop_listener(rate):
+                recognizer = KaldiRecognizer(model, rate, json.dumps([video_phrase, "[unk]"]))
+
+                def listen(data):
+                    if self._stop.is_set() or not recognizer.AcceptWaveform(data):
+                        return False
+                    return json.loads(recognizer.Result()).get("text") == video_phrase
+
+                return listen
+
+            video_guestbook.voice_stop_listener = stop_listener
             service = container.processing_service
             while not self._stop.is_set():
                 device = microphone()
                 if device and not service.is_occupied() and microphone_lock.acquire(blocking=False):
                     try:
                         if not service.is_occupied():
-                            recognizer = KaldiRecognizer(model, 16000, json.dumps([wake, command, f"{wake} {command}", "[unk]"]))
-                            self._listen(device, service, recognizer, wake, command)
+                            recognizer = KaldiRecognizer(model, 16000, json.dumps([wake, command, f"{wake} {command}", video_phrase, "[unk]"]))
+                            self._listen(device, service, recognizer, wake, command, video_phrase)
                     finally:
                         microphone_lock.release()
                 self._stop.wait(0.5)
         except Exception:
             logger.exception("Sprachauslöser konnte nicht gestartet werden oder wurde beendet")
 
-    def _listen(self, device, service, recognizer, wake, command):
+    def _listen(self, device, service, recognizer, wake, command, video_phrase):
+        from fastapi import HTTPException
+
+        from ...routers.api import video_guestbook
+
         args = ["arecord", "-q", "-D", device, "-t", "raw", "-f", "S16_LE", "-r", "16000", "-c", "1"]
         with subprocess.Popen(args, stdout=subprocess.PIPE, bufsize=0) as audio, selectors.DefaultSelector() as selector:
             assert audio.stdout is not None
@@ -97,6 +119,12 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
                     now = time.monotonic()
                     if text == wake:
                         wake_until = now + 4
+                    if text == video_phrase:
+                        try:
+                            video_guestbook.toggle()
+                        except HTTPException:
+                            logger.info("Videogruß per Sprache derzeit nicht verfügbar")
+                        break
                     if text == f"{wake} {command}" or (text == command and now <= wake_until):
                         try:
                             service.trigger_action("image", 0)
