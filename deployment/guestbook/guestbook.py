@@ -26,13 +26,14 @@ def main():
             try:
                 if hook.wait_for_active(timeout=2) or not lifted():
                     continue
-                play(root / "greeting.wav", output_device, lifted)
-                repeat_at = time.monotonic() + 10
+                greeting = root / "greeting.wav"
                 dial_started = False
                 pulses = 0
                 last_pulse = 0.0
                 previous = dial.is_active
-                while lifted():
+
+                def dialed_one():
+                    nonlocal dial_started, pulses, last_pulse, previous
                     current = dial.is_active
                     now = time.monotonic()
                     if current and not previous and now - last_pulse >= 0.025:
@@ -41,32 +42,43 @@ def main():
                         last_pulse = now
                     previous = current
                     if pulses and now - last_pulse > 0.45:
-                        if pulses == 1:
-                            play(root / "beep.wav", output_device, lifted)
-                            if lifted():
-                                record(recordings, input_device, lifted)
-                            break
+                        digit = pulses
                         pulses = 0
-                    if not dial_started and now >= repeat_at:
-                        play(root / "greeting.wav", output_device, lifted)
-                        dial_started = True
-                        previous = dial.is_active
+                        return digit == 1
+                    return False
+
+                start_recording = play(greeting, output_device, lifted, dialed_one)
+                repeat_at = time.monotonic() + 10
+                while lifted() and not start_recording:
+                    start_recording = dialed_one()
+                    if not dial_started and time.monotonic() >= repeat_at:
+                        start_recording = play(greeting, output_device, lifted, dialed_one)
+                        repeat_at = float("inf")
                     time.sleep(0.005)
+                if start_recording and lifted():
+                    play(root / "beep.wav", output_device, lifted)
+                    if lifted():
+                        record(recordings, input_device, lifted)
             except (OSError, sd.PortAudioError):
                 logging.exception("Telephone session failed")
             hook.wait_for_active()
 
 
-def play(path, device, lifted):
+def play(path, device, lifted, interrupt=None):
     if not lifted():
-        return
+        return False
+    interrupted = False
     with subprocess.Popen(["aplay", "-q", "-D", device, str(path)]) as player:
         while player.poll() is None and lifted():
-            time.sleep(0.03)
+            if interrupt is not None and interrupt():
+                interrupted = True
+                break
+            time.sleep(0.005)
         if player.poll() is None:
             player.terminate()
         elif player.returncode:
             raise OSError(f"Cannot play {path}")
+    return interrupted
 
 
 def record(directory, device, lifted):

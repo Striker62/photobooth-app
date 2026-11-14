@@ -34,7 +34,7 @@ In WLED ein rotes Preset anlegen (bei dieser Box **ID 30**). In der WLED-Plugin-
 
 ## Audiogästebuch
 
-Hörer abheben. Die Begrüßung beginnt nach zwei Sekunden. Nach der Ansage **1** wählen. Wenn zehn Sekunden lang keine Ziffer gewählt wird, wiederholt sich die Begrüßung einmal. Nach dem Signalton sprechen und zum Speichern auflegen. Eine Nachricht kann bis zu fünf Minuten lang sein.
+Hörer abheben. Die Begrüßung beginnt nach zwei Sekunden. **1** kann während oder nach der Ansage gewählt werden. Sobald die **1** erkannt wird, stoppt eine laufende Ansage und der Signalton ertönt. Wenn nach der Begrüßung zehn Sekunden lang keine Ziffer gewählt wird, wiederholt sich die Ansage einmal. Nach dem Signalton sprechen und zum Speichern auflegen. Eine Nachricht kann bis zu fünf Minuten lang sein.
 
 Unter **Admin Center → Übersichtsseite → Audiogästebuch** siehst du den Dienststatus. Mit **Aktualisieren** holst du neue Aufnahmen in die Liste. Wähle **Anhören**, **Download** oder **Löschen**. Löschen ist endgültig.
 
