@@ -82,7 +82,8 @@ def play(path, device, lifted, interrupt=None):
 
 
 def record(directory, device, lifted):
-    name = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    started = datetime.now()
+    name = started.strftime("%Y%m%d-%H%M%S-%f")
     temporary = directory / f"{name}.part"
     rate = int(sd.query_devices(device, "input")["default_samplerate"])
     try:
@@ -97,7 +98,11 @@ def record(directory, device, lifted):
                     audio.writeframesraw(block)
                 captured = audio.getnframes()
         if captured:
-            temporary.rename(directory / f"{name}.wav")
+            stem = started.strftime("PB%Y-%m-%d-%H-%M-%S")
+            try:
+                (directory / f"{stem}.wav").hardlink_to(temporary)
+            except FileExistsError:
+                (directory / f"{stem}-{started:%f}.wav").hardlink_to(temporary)
     finally:
         temporary.unlink(missing_ok=True)
 

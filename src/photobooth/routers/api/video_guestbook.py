@@ -5,6 +5,7 @@ import subprocess
 import threading
 import time
 import wave
+from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
@@ -75,6 +76,7 @@ def record(device, acquisition, reservation):
         time.sleep(max(0, deadline - time.monotonic()))
         VIDEOS.mkdir(parents=True, exist_ok=True, mode=0o700)
         with microphone_lock:
+            started = datetime.now()
             video = acquisition.start_recording()
             try:
                 with subprocess.Popen(
@@ -118,7 +120,11 @@ def record(device, acquisition, reservation):
             check=True, timeout=30,
         )
         os.chmod(output, 0o600)
-        output.rename(VIDEOS / f"{token}.mp4")
+        stem = started.strftime("PB%Y-%m-%d-%H-%M-%S")
+        try:
+            (VIDEOS / f"{stem}.mp4").hardlink_to(output)
+        except FileExistsError:
+            (VIDEOS / f"{stem}-{started:%f}.mp4").hardlink_to(output)
     except Exception:
         outcome = "error"
         logger.exception("Video guestbook recording failed")

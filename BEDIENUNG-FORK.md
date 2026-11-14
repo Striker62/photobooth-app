@@ -50,6 +50,8 @@ Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Vid
 
 Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Unter **Admin Center → Audiogästebuch → Video** kannst du neue Videogrüße unabhängig vom Sprachauslöser deaktivieren. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
 
+Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` und `PB2026-11-14-17-05-09.mp4`. Der Name enthält die lokale Startzeit der Aufnahme. Bei einer Namenskollision kommen sechs Stellen für die Mikrosekunden hinzu. Ältere Aufnahmen behalten ihre Dateinamen und bleiben im Admin Center verfügbar.
+
 ## Sprachauslöser
 
 Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während eines Videogrußes erkennt er den Stoppbefehl direkt aus dem aufgenommenen Ton. Das Mikrofon des Telefonhörers bleibt separat.

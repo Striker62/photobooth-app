@@ -13,7 +13,9 @@ router = APIRouter(prefix="/guestbook", tags=["guestbook"])
 ROOT = Path.home() / "AudioGuestbook"
 GREETING = ROOT / "greeting.wav"
 RECORDINGS = ROOT / "recordings"
-RECORDING_NAME = re.compile(r"(?:[0-9]{8}-[0-9]{6}-[0-9]{6}|gaestebuch_eintrag[0-9]+)\.wav")
+TIMESTAMP_NAME = r"PB[0-9]{4}(?:-[0-9]{2}){5}(?:-[0-9]{6})?"
+RECORDING_NAME = re.compile(rf"(?:{TIMESTAMP_NAME}|[0-9]{{8}}-[0-9]{{6}}-[0-9]{{6}}|gaestebuch_eintrag[0-9]+)\.wav")
+VIDEO_NAME = re.compile(rf"(?:{TIMESTAMP_NAME}|[0-9a-f]{{32}})\.mp4")
 UNIT = "photobooth-guestbook.service"
 
 
@@ -96,7 +98,7 @@ def videos():
     return [
         {"name": path.name, "created": path.stat().st_mtime}
         for path in VIDEOS.glob("*.mp4")
-        if re.fullmatch(r"[0-9a-f]{32}\.mp4", path.name) and not path.is_symlink() and path.is_file()
+        if VIDEO_NAME.fullmatch(path.name) and not path.is_symlink() and path.is_file()
     ]
 
 
@@ -118,7 +120,7 @@ def set_video_enabled(enabled: bool):
 
 def video_path(name: str):
     path = VIDEOS / name
-    if not re.fullmatch(r"[0-9a-f]{32}\.mp4", name) or path.is_symlink() or not path.is_file():
+    if not VIDEO_NAME.fullmatch(name) or path.is_symlink() or not path.is_file():
         raise HTTPException(404)
     return path
 
