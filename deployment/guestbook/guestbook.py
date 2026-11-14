@@ -24,7 +24,11 @@ def main():
         while True:
             hook.wait_for_inactive()
             try:
+                if hook.wait_for_active(timeout=2) or not lifted():
+                    continue
                 play(root / "greeting.wav", output_device, lifted)
+                repeat_at = time.monotonic() + 10
+                dial_started = False
                 pulses = 0
                 last_pulse = 0.0
                 previous = dial.is_active
@@ -32,6 +36,7 @@ def main():
                     current = dial.is_active
                     now = time.monotonic()
                     if current and not previous and now - last_pulse >= 0.025:
+                        dial_started = True
                         pulses += 1
                         last_pulse = now
                     previous = current
@@ -42,6 +47,10 @@ def main():
                                 record(recordings, input_device, lifted)
                             break
                         pulses = 0
+                    if not dial_started and now >= repeat_at:
+                        play(root / "greeting.wav", output_device, lifted)
+                        dial_started = True
+                        previous = dial.is_active
                     time.sleep(0.005)
             except (OSError, sd.PortAudioError):
                 logging.exception("Telephone session failed")
