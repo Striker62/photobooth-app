@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
+from ...appconfig import appconfig
 from ...container import container
 from ...utils.exceptions import ProcessMachineOccupiedError
 from ...utils.video_microphone import ROOT, microphone, microphone_lock
@@ -65,7 +66,9 @@ def toggle():
             raise HTTPException(409, "Die Kamera ist gerade belegt.") from exc
         stop.clear()
         state = "countdown"
-        deadline = time.monotonic() + COUNTDOWN_SECONDS
+        photo_actions = appconfig.actions.image
+        countdown = photo_actions[0].jobcontrol.countdown_capture if photo_actions else COUNTDOWN_SECONDS
+        deadline = time.monotonic() + countdown
         try:
             threading.Thread(target=record, args=(device, acquisition, reservation, recording_seconds()), daemon=True).start()
         except RuntimeError:

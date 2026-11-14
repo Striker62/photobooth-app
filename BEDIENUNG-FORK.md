@@ -42,7 +42,7 @@ Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestäti
 
 ## Videogästebuch
 
-Der Videobutton erscheint auf dem vorhandenen Livebild, wenn das Mikrofon eingerichtet und das Videogästebuch aktiv ist. Einmal den Button drücken oder am Buzzer **c** drücken. Nach drei Sekunden startet die Aufnahme mit Bild und Ton. Noch einmal drücken, um zu stoppen und direkt zu speichern. Nach Ablauf der eingestellten Höchstdauer speichert die Box automatisch. Der Countdown erscheint wie beim Foto mittig im Livebild. Restzeit und Speicherstatus stehen am unteren Bildschirmrand. Während Countdown und Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
+Der Videobutton erscheint auf dem vorhandenen Livebild, wenn das Mikrofon eingerichtet und das Videogästebuch aktiv ist. Einmal den Button drücken oder am Buzzer **c** drücken. Nach dem Countdown startet die Aufnahme mit Bild und Ton. Die Dauer übernimmt das Videogästebuch von der ersten Fotoaktion. Noch einmal drücken, um zu stoppen und direkt zu speichern. Nach Ablauf der eingestellten Höchstdauer speichert die Box automatisch. Der Countdown erscheint wie beim Foto mittig im Livebild. Restzeit und Speicherstatus stehen am unteren Bildschirmrand. Während Countdown und Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
 
 Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera Video“**. Das Wort **Video** ist in der Plugin-Konfiguration einstellbar. Für einen GPIO-Taster den freien BCM-Pin als einzige Zeile in `~/VideoGuestbook/gpio` schreiben, GPIO-Eingabe aktivieren und Dienste neu laden. Beim Einsatz von **c** für Video die alte Collage-Tastenzuordnung entfernen.
 
