@@ -56,6 +56,8 @@ Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` 
 
 ## Sprachauslöser
 
+Unter **Admin Center → Audiogästebuch → Sprachtest** kannst du mit **Wörter erkennen** fünf Sekunden frei sprechen. Danach zeigt die Box den von Vosk erkannten Text. Wiederhole das Wort aus normalem Abstand und übernimm einen zuverlässig erkannten Text als Aktivierungswort, Foto- oder Videobefehl. **Gespeicherte Befehle testen** zeigt die Aktion an, die der erkannte Befehl auslösen würde. Der Test löst keine Aufnahme aus. Lade nach dem Speichern die Dienste neu, damit die Gästeansicht die neuen Wörter verwendet.
+
 Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während eines Videogrußes erkennt er den Stoppbefehl direkt aus dem aufgenommenen Ton. Das Mikrofon des Telefonhörers bleibt separat.
 
 1. Das vorhandene deutsche Vosk-Modell aus dem Backup (`voicetrigger/model`) nach `~/VoiceTrigger/model` auf den Pi kopieren. Direkt darin müssen unter anderem die Unterordner `am` und `conf` liegen.

@@ -11,7 +11,7 @@ from pydantic_settings import SettingsConfigDict
 from ... import CONFIG_PATH
 from ...services.config.baseconfig import BaseConfig
 from ...utils.exceptions import ProcessMachineOccupiedError
-from ...utils.video_microphone import microphone, microphone_lock
+from ...utils.video_microphone import microphone, microphone_lock, voice_test_active
 from .. import hookimpl
 from ..base_plugin import BasePlugin
 
@@ -85,7 +85,7 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
             service = container.processing_service
             while not self._stop.is_set():
                 device = microphone()
-                if device and not service.is_occupied() and microphone_lock.acquire(blocking=False):
+                if device and not voice_test_active.is_set() and not service.is_occupied() and microphone_lock.acquire(blocking=False):
                     try:
                         if not service.is_occupied():
                             recognizer = KaldiRecognizer(model, 16000, json.dumps([wake, command, f"{wake} {command}", video_phrase, "[unk]"]))
@@ -107,7 +107,7 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
             selector.register(audio.stdout, selectors.EVENT_READ)
             wake_until = 0.0
             try:
-                while not self._stop.is_set() and not service.is_occupied():
+                while not self._stop.is_set() and not voice_test_active.is_set() and not service.is_occupied():
                     if not selector.select(timeout=0.1):
                         continue
                     data = audio.stdout.read(4096)
@@ -116,6 +116,8 @@ class Voicetrigger(BasePlugin[VoiceTriggerConfig]):
                     if not recognizer.AcceptWaveform(data):
                         continue
                     text = json.loads(recognizer.Result()).get("text", "")
+                    if voice_test_active.is_set():
+                        break
                     now = time.monotonic()
                     if text == wake:
                         wake_until = now + 4

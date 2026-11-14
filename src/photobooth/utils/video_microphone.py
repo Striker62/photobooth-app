@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
-from threading import Lock
+from threading import Event, Lock
 
 ROOT = Path.home() / "VideoGuestbook"
 microphone_lock = Lock()
+voice_test_active = Event()
 
 
 def microphone() -> str:
