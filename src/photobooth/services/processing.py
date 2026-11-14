@@ -3,6 +3,8 @@ from collections.abc import Mapping
 from queue import Empty, Full, Queue
 from threading import Event as threadingEvent
 from threading import Thread
+from threading import Lock
+from contextlib import contextmanager
 from typing import Literal
 from uuid import UUID
 
@@ -105,6 +107,8 @@ class ProcessingService(BaseService):
         # objects
         self._workflow_jobmodel: JobModelType | None = None
         self._process_thread: Thread | None = None
+        self._capture_lock = Lock()
+        self._external_capture = False
 
         # external commands (next/reject/abort) can be sent from frontend api endpoints or gpio.
         # once a cmd is required, the user answer is queued and read by the job processor to continue as requested
@@ -120,7 +124,18 @@ class ProcessingService(BaseService):
         super().stopped()
 
     def is_occupied(self) -> bool:
-        return self._workflow_jobmodel is not None
+        return self._workflow_jobmodel is not None or self._external_capture
+
+    @contextmanager
+    def reserve_capture(self):
+        with self._capture_lock:
+            self._check_occupied()
+            self._external_capture = True
+        try:
+            yield self._acquisition_service
+        finally:
+            with self._capture_lock:
+                self._external_capture = False
 
     def _check_occupied(self):
         if self.is_occupied():
@@ -195,6 +210,10 @@ class ProcessingService(BaseService):
             sse_service.dispatch_event(SseEventProcessStateinfo(source=source.id, target=target.id, jobmodel=self._workflow_jobmodel.export()))
 
     def trigger_action(self, action_type: ActionType, action_index: int = 0):
+        with self._capture_lock:
+            self._trigger_action(action_type, action_index)
+
+    def _trigger_action(self, action_type: ActionType, action_index: int):
         ## preflight checks
         self._check_occupied()
 

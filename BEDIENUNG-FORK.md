@@ -40,6 +40,14 @@ Im eigenen Tab **Admin Center → Audiogästebuch** siehst du den Dienststatus. 
 
 Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestätige. Das stoppt den Dienst und schaltet seinen Autostart aus. Gespeicherte Aufnahmen kannst du weiterhin verwalten. **Telefon aktivieren** startet den Dienst wieder und schaltet den Autostart ein. Für die erstmalige Einrichtung auf dem Pi und den Import alter Aufnahmen siehe [Audiogästebuch einrichten](deployment/guestbook/README.md).
 
+## Videogästebuch
+
+Das Videogästebuch erscheint in der Gästeansicht, sobald ein Mikrofon am Pi dafür eingerichtet ist. **Videogruß aufnehmen → Aufnahme starten** wählen. Nach drei Sekunden Countdown nimmt die Box 15 Sekunden mit Bild und Ton auf. Danach den Gruß ansehen, neu aufnehmen oder speichern. Während der Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
+
+Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Video**. Dort kannst du sie ansehen, herunterladen und löschen. Auf dem Pi liegen sie unter `~/VideoGuestbook/recordings/`.
+
+Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Zum Deaktivieren diese Datei umbenennen und die Gästeansicht neu laden. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
+
 ## Update prüfen
 
 Unter **Systeminformationen → App-Version** auf den grünen Update-Pfeil klicken. Den angezeigten Befehl als Benutzer `pi` im Terminal auf dem Raspberry Pi ausführen. Anschließend das Admin Center mit **Strg + F5** neu laden.

@@ -6,6 +6,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
+from ..api.video_guestbook import VIDEOS
+
 router = APIRouter(prefix="/guestbook", tags=["guestbook"])
 ROOT = Path.home() / "AudioGuestbook"
 GREETING = ROOT / "greeting.wav"
@@ -84,3 +86,31 @@ def audio(name: str):
 @router.delete("/recordings/{name}", status_code=204)
 def delete(name: str):
     recording(name).unlink(missing_ok=True)
+
+
+@router.get("/videos")
+def videos():
+    if not VIDEOS.is_dir():
+        return []
+    return [
+        {"name": path.name, "created": path.stat().st_mtime}
+        for path in VIDEOS.glob("*.mp4")
+        if re.fullmatch(r"[0-9a-f]{32}\.mp4", path.name) and not path.is_symlink() and path.is_file()
+    ]
+
+
+def video_path(name: str):
+    path = VIDEOS / name
+    if not re.fullmatch(r"[0-9a-f]{32}\.mp4", name) or path.is_symlink() or not path.is_file():
+        raise HTTPException(404)
+    return path
+
+
+@router.get("/videos/{name}")
+def video(name: str):
+    return FileResponse(video_path(name), media_type="video/mp4", headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/videos/{name}", status_code=204)
+def delete_video(name: str):
+    video_path(name).unlink(missing_ok=True)
