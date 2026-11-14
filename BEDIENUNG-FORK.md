@@ -32,6 +32,14 @@ Eine neue SD-Karte oder einen neuen USB-Drucker richtest du mit der [Selphy-Inst
 
 In WLED ein rotes Preset anlegen (bei dieser Box **ID 30**). In der WLED-Plugin-Konfiguration der Fotobox dieselbe Nummer unter **WLED-Preset bei Druckfehler** eintragen. Bei erkanntem Druckfehler signalisiert WLED im Standby die Störung mit Rot. Gäste können weiter fotografieren. Sobald die App den Drucker wieder als bereit erkennt, kehrt WLED zum regulären Standby zurück.
 
+## Audiogästebuch
+
+Hörer abheben, Begrüßung abwarten und **1** wählen. Nach dem Signalton sprechen und zum Speichern auflegen. Eine Nachricht kann bis zu fünf Minuten lang sein.
+
+Unter **Admin Center → Übersichtsseite → Audiogästebuch** siehst du den Dienststatus. Mit **Aktualisieren** holst du neue Aufnahmen in die Liste. Wähle **Anhören**, **Download** oder **Löschen**. Löschen ist endgültig.
+
+Der Telefondienst startet unabhängig von der Fotobox. Für die erstmalige Einrichtung auf dem Pi und den Import alter Aufnahmen siehe [Audiogästebuch einrichten](deployment/guestbook/README.md).
+
 ## Update prüfen
 
 Unter **Systeminformationen → App-Version** auf den grünen Update-Pfeil klicken. Den angezeigten Befehl als Benutzer `pi` im Terminal auf dem Raspberry Pi ausführen. Anschließend das Admin Center mit **Strg + F5** neu laden.

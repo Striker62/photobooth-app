@@ -1,0 +1,12 @@
+[Unit]
+Description=Photobooth telephone audio guestbook
+
+[Service]
+ExecStart=/usr/bin/python3 %h/AudioGuestbook/guestbook.py
+EnvironmentFile=-%h/AudioGuestbook/audio.env
+Restart=on-failure
+RestartSec=3
+UMask=0077
+
+[Install]
+WantedBy=default.target
