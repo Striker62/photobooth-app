@@ -69,7 +69,7 @@ Quelle: https://sourceforge.net/projects/gimp-print/files/gutenprint-5.3/5.3.5/
 Repository auf dem Pi auschecken (einmalig, falls noch nicht vorhanden):
 
 ```bash
-git clone --branch test/v9.0.0-hq-selphy --single-branch \
+git clone --branch main --single-branch \
   https://github.com/Striker62/photobooth-app.git ~/photobooth-source
 cd ~/photobooth-source
 ```

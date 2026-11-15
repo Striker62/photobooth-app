@@ -69,6 +69,19 @@ Die Erkennung läuft lokal. Die frühere frei konfigurierbare Zuordnung zu Druck
 
 ## Update prüfen
 
+Der Installationszweig des Forks ist `main`. Wenn dein bereits installiertes Update-Fenster noch auf `@test/v9.0.0-light-meter` zeigt, ersetze beim nächsten Update im angezeigten Befehl einmalig diese Angabe durch `@main`. Prüfe anschließend die Commit-Kennung im Admin Center.
+
+Falls du den Telefondienst über den bisherigen Quellordner pflegst, stelle auch diesen einmalig auf `main` um. Als Benutzer `pi` ausführen:
+
+```bash
+cd ~/photobooth-guestbook-source &&
+git remote set-branches --add origin main &&
+git fetch origin &&
+git switch --track origin/main
+```
+
+Danach holt `git pull --ff-only` die nächsten Änderungen des Telefondienstes aus `main`.
+
 Unter **Systeminformationen → App-Version** auf den grünen Update-Pfeil klicken. Den angezeigten Befehl als Benutzer `pi` im Terminal auf dem Raspberry Pi ausführen. Anschließend das Admin Center mit **Strg + F5** neu laden.
 
-Unter der App-Version steht **Striker62-Fork · Commit** mit der kurzen Kennung der installierten Git-Version. Vergleiche sie mit dem erwarteten Stand auf dem [GitHub-Testzweig](https://github.com/Striker62/photobooth-app/tree/test/v9.0.0-light-meter). Die App-Version kann weiterhin `9.0.0` lauten, auch wenn der Fork aktualisiert wurde.
+Unter der App-Version steht **Striker62-Fork · Commit** mit der kurzen Kennung der installierten Git-Version. Vergleiche sie mit dem erwarteten Stand auf dem [GitHub-Hauptzweig](https://github.com/Striker62/photobooth-app/tree/main). Die App-Version kann weiterhin `9.0.0` lauten, auch wenn der Fork aktualisiert wurde.
