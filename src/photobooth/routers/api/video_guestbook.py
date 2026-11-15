@@ -35,11 +35,19 @@ def recording_seconds() -> int:
     return min(300, max(1, seconds))
 
 
+def video_key():
+    try:
+        return (ROOT / "key").read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return "c"
+
+
 @router.get("")
 def settings():
     with lock:
         return {
             "enabled": bool(microphone()) and not (ROOT / "disabled").exists(),
+            "key": video_key(),
             "show_button": not (ROOT / "hide-button").exists(),
             "state": state,
             "remaining": max(0, deadline - time.monotonic()),

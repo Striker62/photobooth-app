@@ -36,7 +36,7 @@ In WLED ein rotes Preset anlegen (bei dieser Box **ID 30**). In der WLED-Plugin-
 
 Hörer abheben. Die Begrüßung beginnt nach zwei Sekunden. **1** kann während oder nach der Ansage gewählt werden. Sobald die **1** erkannt wird, stoppt eine laufende Ansage und der Signalton ertönt. Wenn nach der Begrüßung zehn Sekunden lang keine Ziffer gewählt wird, wiederholt sich die Ansage einmal. Nach dem Signalton sprechen und zum Speichern auflegen. Eine Nachricht kann bis zu fünf Minuten lang sein.
 
-Im eigenen Tab **Admin Center → Audiogästebuch** siehst du den Dienststatus. Mit **Ansage anhören** kannst du die hinterlegte Begrüßung im Browser abspielen. Mit **Aktualisieren** holst du neue Aufnahmen in die Liste. Wähle **Anhören**, **Download** oder **Löschen**. Löschen ist endgültig.
+Im eigenen Tab **Admin Center → Mediengästebuch** siehst du den Dienststatus. Mit **Ansage anhören** kannst du die hinterlegte Begrüßung im Browser abspielen. Mit **Aktualisieren** holst du neue Aufnahmen in die Liste. Wähle **Anhören**, **Download** oder **Löschen**. Löschen ist endgültig.
 
 Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestätige. Das stoppt den Dienst und schaltet seinen Autostart aus. Gespeicherte Aufnahmen kannst du weiterhin verwalten. **Telefon aktivieren** startet den Dienst wieder und schaltet den Autostart ein. Für die erstmalige Einrichtung auf dem Pi und den Import alter Aufnahmen siehe [Audiogästebuch einrichten](deployment/guestbook/README.md).
 
@@ -44,25 +44,25 @@ Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestäti
 
 Der Videobutton erscheint auf dem vorhandenen Livebild, wenn das Mikrofon eingerichtet und das Videogästebuch aktiv ist. Einmal den Button drücken oder am Buzzer **c** drücken. Nach dem Countdown startet die Aufnahme mit Bild und Ton. Die Dauer übernimmt das Videogästebuch von der ersten Fotoaktion. Noch einmal drücken, um zu stoppen und direkt zu speichern. Nach Ablauf der eingestellten Höchstdauer speichert die Box automatisch. Der Countdown erscheint wie beim Foto mittig im Livebild. Restzeit und Speicherstatus stehen am unteren Bildschirmrand. Während Countdown und Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
 
-Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera Video“**. Das Wort **Video** ist in der Plugin-Konfiguration einstellbar. Für einen GPIO-Taster den freien BCM-Pin als einzige Zeile in `~/VideoGuestbook/gpio` schreiben, GPIO-Eingabe aktivieren und Dienste neu laden. Beim Einsatz von **c** für Video die alte Collage-Tastenzuordnung entfernen.
+Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera Video“**. Das Wort **Video** ist in der Plugin-Konfiguration einstellbar. Unter **Mediengästebuch → Video** kannst du die Videotaste (Standard **c**) und den freien BCM-Pin einstellen. Leere Felder deaktivieren den jeweiligen Auslöser. Verwende keinen bereits belegten Pin, insbesondere nicht BCM 17 oder 18 bei angeschlossenem Gästebuchtelefon. Für GPIO die globale GPIO-Eingabe einschalten und nach dem Speichern die Dienste neu laden.
 
-Gespeicherte Grüße findest du unter **Admin Center → Audiogästebuch → Video**. Dort kannst du sie ansehen, herunterladen und löschen. Auf dem Pi liegen sie unter `~/VideoGuestbook/recordings/`.
+Gespeicherte Grüße findest du unter **Admin Center → Mediengästebuch → Video**. Dort kannst du sie ansehen, herunterladen und löschen. Auf dem Pi liegen sie unter `~/VideoGuestbook/recordings/`.
 
 Während der Aufnahme nutzt WLED das gleiche weiße Preset wie beim Foto. Beim Stoppen wechselt WLED zurück zum Standby-Preset. Wenn `c` nichts auslöst, zuerst den Videobutton auf der Gäste-Startseite testen. Prüfe danach in einem Texteditor auf dem Pi, ob die entsprechende Buzzertaste tatsächlich ein `c` sendet.
 
-Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Unter **Admin Center → Audiogästebuch → Video** kannst du neue Videogrüße unabhängig vom Sprachauslöser deaktivieren. Dort kannst du auch das Videosymbol ausblenden und die maximale Aufnahmedauer zwischen 1 und 300 Sekunden festlegen (Standard 15 Sekunden). Klicke danach auf **Einstellungen speichern**. Bei ausgeblendetem Symbol funktionieren Buzzer, GPIO und Sprache weiter. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
+Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mikrofons ermitteln. Den Gerätenamen, beispielsweise `plughw:CARD=USB,DEV=0`, als einzige Zeile in `~/VideoGuestbook/microphone` speichern. Der Ordner muss dem Photobooth-Benutzer gehören. Unter **Admin Center → Mediengästebuch → Video** kannst du neue Videogrüße unabhängig vom Sprachauslöser deaktivieren. Dort kannst du auch das Videosymbol ausblenden und die maximale Aufnahmedauer zwischen 1 und 300 Sekunden festlegen (Standard 15 Sekunden). Klicke danach auf **Einstellungen speichern**. Bei ausgeblendetem Symbol funktionieren Buzzer, GPIO und Sprache weiter. Für Video nutzt die Box `arecord` aus `alsa-utils` und `ffmpeg`.
 
 Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` und `PB2026-11-14-17-05-09.mp4`. Der Name enthält die lokale Startzeit der Aufnahme. Bei einer Namenskollision kommen sechs Stellen für die Mikrosekunden hinzu. Ältere Aufnahmen behalten ihre Dateinamen und bleiben im Admin Center verfügbar.
 
 ## Sprachauslöser
 
-Unter **Admin Center → Audiogästebuch → Sprachtest** kannst du mit **Wörter erkennen** fünf Sekunden frei sprechen. Danach zeigt die Box den von Vosk erkannten Text. Wiederhole das Wort aus normalem Abstand und übernimm einen zuverlässig erkannten Text als Aktivierungswort, Foto- oder Videobefehl. **Gespeicherte Befehle testen** zeigt die Aktion an, die der erkannte Befehl auslösen würde. Der Test löst keine Aufnahme aus. Lade nach dem Speichern die Dienste neu, damit die Gästeansicht die neuen Wörter verwendet.
+Unter **Admin Center → Mediengästebuch → Sprachtest** kannst du mit **Wörter erkennen** fünf Sekunden frei sprechen. Danach zeigt die Box den von Vosk erkannten Text. Wiederhole das Wort aus normalem Abstand und übernimm einen zuverlässig erkannten Text als Aktivierungswort, Foto- oder Videobefehl. **Gespeicherte Befehle testen** zeigt die Aktion an, die der erkannte Befehl auslösen würde. Der Test löst keine Aufnahme aus. Lade nach dem Speichern die Dienste neu, damit die Gästeansicht die neuen Wörter verwendet.
 
 Der Sprachauslöser nutzt dasselbe Mikrofon wie das Videogästebuch. Während eines Videogrußes erkennt er den Stoppbefehl direkt aus dem aufgenommenen Ton. Das Mikrofon des Telefonhörers bleibt separat.
 
 1. Das vorhandene deutsche Vosk-Modell aus dem Backup (`voicetrigger/model`) nach `~/VoiceTrigger/model` auf den Pi kopieren. Direkt darin müssen unter anderem die Unterordner `am` und `conf` liegen.
 2. Als Benutzer `pi` mit `pipx inject photobooth-app vosk` die Spracherkennung in die App-Umgebung installieren. Das USB-Mikrofon wie im Abschnitt Videogästebuch einrichten.
-3. In der Admin-Konfiguration unter den Plugins **Sprachauslöser** aktivieren, speichern und die Photobooth-Dienste neu laden.
+3. Unter **Mediengästebuch → Sprachtest** den **Sprachauslöser** aktivieren, speichern und die Photobooth-Dienste neu laden.
 4. In der Gästeansicht **„Kamera Foto“** sagen. Alternativ **„Kamera“** sagen und innerhalb von vier Sekunden **„Foto“**. Das löst die erste Fotoaktion aus. Beide Wörter sind in der Plugin-Konfiguration einstellbar.
 
 Die Erkennung läuft lokal. Die frühere frei konfigurierbare Zuordnung zu Druck- und anderen Aktionen ist in dieser Version nicht enthalten.

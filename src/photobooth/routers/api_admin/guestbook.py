@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from ..api.video_guestbook import ROOT as VIDEO_ROOT
-from ..api.video_guestbook import VIDEOS, lock as video_lock, microphone, recording_seconds
+from ..api.video_guestbook import VIDEOS, lock as video_lock, microphone, recording_seconds, video_key
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/guestbook", tags=["guestbook"])
@@ -110,10 +110,21 @@ def video_settings():
         "configured": bool(microphone()),
         "show_button": not (VIDEO_ROOT / "hide-button").exists(),
         "seconds": recording_seconds(),
+        "key": video_key(),
+        "gpio": gpio_pin(),
     }
 
 
+def gpio_pin():
+    try:
+        return (VIDEO_ROOT / "gpio").read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return ""
+
+
 class VideoControls(BaseModel):
+    key: str = Field(pattern=r"^[a-z0-9]?$")
+    gpio: str = Field(pattern=r"^(?:[2-9]|1[0-9]|2[0-7])?$")
     show_button: bool
     seconds: int = Field(ge=1, le=300)
 
@@ -125,6 +136,10 @@ def set_video_controls(controls: VideoControls):
         temporary = VIDEO_ROOT / "duration.tmp"
         temporary.write_text(str(controls.seconds), encoding="utf-8")
         temporary.replace(VIDEO_ROOT / "duration")
+        for name, value in (("key", controls.key), ("gpio", controls.gpio)):
+            temporary = VIDEO_ROOT / f"{name}.tmp"
+            temporary.write_text(value, encoding="utf-8")
+            temporary.replace(VIDEO_ROOT / name)
         marker = VIDEO_ROOT / "hide-button"
         if controls.show_button:
             marker.unlink(missing_ok=True)
