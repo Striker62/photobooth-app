@@ -58,7 +58,7 @@ Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` 
 
 Öffne auf einem Gerät im gleichen Netz die Adresse der Box mit dem Zusatz `/#/standalone/guestbook`. Wähle **Audio** oder **Video** und öffne die gewünschte Aufnahme. **Aktualisieren** lädt neue Grüße. Alle gespeicherten Grüße sind dort ohne Anmeldung abspielbar. Einstellungen und Löschen erfolgen im Admin Center.
 
-Unter **Übersichtsseite → Mediendatenbank → Medien löschen** kannst du vor der Bestätigung zusätzlich **Auch alle Audio- und Videogrüße endgültig löschen** auswählen. Dann werden auch die gespeicherten Gästebuchaufnahmen gelöscht. Die Telefonansage bleibt erhalten.
+Unter **Übersichtsseite → Mediendatenbank → Medien löschen** werden nach einer gemeinsamen Bestätigung alle Galeriemedien sowie alle gespeicherten Audio- und Videogrüße gelöscht. Die Telefonansage bleibt erhalten.
 
 ## Sprachauslöser
 
