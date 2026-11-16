@@ -179,3 +179,22 @@ def video(name: str):
 @router.delete("/videos/{name}", status_code=204)
 def delete_video(name: str):
     video_path(name).unlink(missing_ok=True)
+
+
+@router.delete("/all-media", status_code=204)
+def delete_all_media():
+    from ..api.mediacollection import api_gallery_delete_all
+
+    api_gallery_delete_all()
+    failed = 0
+    for directory, pattern in ((RECORDINGS, RECORDING_NAME), (VIDEOS, VIDEO_NAME)):
+        if not directory.is_dir():
+            continue
+        for path in directory.iterdir():
+            if pattern.fullmatch(path.name) and path.is_file() and not path.is_symlink():
+                try:
+                    path.unlink(missing_ok=True)
+                except OSError:
+                    failed += 1
+    if failed:
+        raise HTTPException(500, f"{failed} Gästebuchdateien konnten nicht gelöscht werden.")
