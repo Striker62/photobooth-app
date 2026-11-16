@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .container import container
 from .routers import api, api_admin
+from .routers.api import guestbook
 from .routers.media import media_router
 from .routers.static import static_router
 from .routers.userdata import userdata_router
@@ -77,6 +78,7 @@ def _create_app() -> FastAPI:
         lifespan=lifespan,
     )
     _app.include_router(api.router)
+    _app.include_router(guestbook.router, prefix="/api")
     _app.include_router(api_admin.router)
     _app.include_router(media_router)
     _app.include_router(static_router)

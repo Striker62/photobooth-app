@@ -36,18 +36,23 @@ def status():
     except (OSError, subprocess.TimeoutExpired):
         state = "unknown"
         unit_state = ""
-    recordings = []
-    if RECORDINGS.is_dir():
-        for path in sorted(RECORDINGS.iterdir(), reverse=True):
-            if RECORDING_NAME.fullmatch(path.name) and path.is_file() and not path.is_symlink():
-                recordings.append(path.name)
     return {
         "state": state,
         "enabled": unit_state == "enabled",
         "installed": unit_state in ("enabled", "disabled"),
         "has_greeting": GREETING.is_file() and not GREETING.is_symlink(),
-        "recordings": recordings,
+        "recordings": audio_recordings(),
     }
+
+
+def audio_recordings() -> list[str]:
+    if not RECORDINGS.is_dir():
+        return []
+    return [
+        path.name
+        for path in sorted(RECORDINGS.iterdir(), reverse=True)
+        if RECORDING_NAME.fullmatch(path.name) and not path.is_symlink() and path.is_file()
+    ]
 
 
 @router.get("/greeting")

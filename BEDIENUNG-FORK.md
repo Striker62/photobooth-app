@@ -54,6 +54,10 @@ Zum Einrichten auf dem Pi mit `arecord -l` den ALSA-Kartennamen des separaten Mi
 
 Neue Audio- und Videoaufnahmen heißen zum Beispiel `PB2026-11-14-17-05-09.wav` und `PB2026-11-14-17-05-09.mp4`. Der Name enthält die lokale Startzeit der Aufnahme. Bei einer Namenskollision kommen sechs Stellen für die Mikrosekunden hinzu. Ältere Aufnahmen behalten ihre Dateinamen und bleiben im Admin Center verfügbar.
 
+## Mediengästebuch auf einem zweiten Gerät öffnen
+
+Öffne auf einem Gerät im gleichen Netz die Adresse der Box mit dem Zusatz `/#/standalone/guestbook`. Wähle **Audio** oder **Video** und öffne die gewünschte Aufnahme. **Aktualisieren** lädt neue Grüße. Alle gespeicherten Grüße sind dort ohne Anmeldung abspielbar. Einstellungen und Löschen erfolgen im Admin Center.
+
 ## Sprachauslöser
 
 Unter **Admin Center → Mediengästebuch → Sprachtest** kannst du mit **Wörter erkennen** fünf Sekunden frei sprechen. Danach zeigt die Box den von Vosk erkannten Text. Wiederhole das Wort aus normalem Abstand und übernimm einen zuverlässig erkannten Text als Aktivierungswort, Foto- oder Videobefehl. **Gespeicherte Befehle testen** zeigt die Aktion an, die der erkannte Befehl auslösen würde. Der Test löst keine Aufnahme aus. Lade nach dem Speichern die Dienste neu, damit die Gästeansicht die neuen Wörter verwendet.
