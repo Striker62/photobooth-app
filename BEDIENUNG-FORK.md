@@ -16,6 +16,12 @@ Die folgenden Funktionen ergänzen die Photobooth-App 9.0.0 im Striker62-Fork. D
 4. Mit **Vorübergehend testen** die Wirkung in der Vorschau prüfen. **Test beenden** stellt die gespeicherten Werte wieder her. Mit **Kameraeinstellungen speichern** übernimmt die Box die Werte dauerhaft.
 5. Mit **Profil speichern** kannst du die Werte unter einem Namen wie „Holzhintergrund mit LED-Licht“ ablegen. Später unter **Lichtprofil laden** auswählen, testen und mit **Kameraeinstellungen speichern** übernehmen.
 
+### Graukarte lokal auswerten
+
+Fotografiere eine matte 18-%-Graukarte auf Gesichtshöhe an der Standlinie mit dem Aufnahmelicht. Lade das gespeicherte Testfoto unter **Belichtungsmesser → Graukarte auswerten** und klicke auf eine gleichmäßig beleuchtete Stelle in der Mitte der Karte. Die Auswertung läuft im Browser.
+
+Stelle im Entwurf die Werte ein, mit denen das Testfoto aufgenommen wurde. Übernimm den EV-Vorschlag und bei manuellem Weißabgleich auch die vorgeschlagenen Rot- und Blauwerte. **Vorübergehend testen** und ein neues Testfoto aufnehmen. Gefällt dir das Ergebnis, speichere es als Kameraeinstellung oder Lichtprofil.
+
 ## Drucker und Buzzer
 
 - **Druckwarteschlange:** Für den USB-Selphy `Selphy_CP1500_USB` auswählen. **Aktualisieren** lädt den Status und offene Aufträge. **Abbrechen** entfernt den ausgewählten Auftrag nach Bestätigung.
