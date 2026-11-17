@@ -10,6 +10,8 @@ Die folgenden Funktionen ergänzen die Photobooth-App 9.0.0 im Striker62-Fork. D
 
 ## Belichtung und Weißabgleich
 
+Öffne **Admin Center → Belichtung**. Dort findest du den Belichtungsmesser, die Kameraeinstellungen, die Lichtprofile, den Graukarten-Assistenten und eine Kurzanleitung.
+
 1. Unter **Belichtungsmesser** auf **Messung starten** klicken. Die Livevorschau und das Histogramm zeigen, wie hell das Bild ist. Ist die Vorschau schwarz, prüfe die Livevorschau sowohl in der allgemeinen Konfiguration als auch für die verwendete Kamera.
 2. Mit **Licht einstellen** die Picamera2-Regler öffnen. Über **Belichtungskorrektur (EV)** kannst du das Bild aufhellen (plus) oder abdunkeln (minus).
 3. Bei wechselndem Tageslicht **Auto** wählen. Wirkt das Bild gelblich, die **Blaukorrektur** leicht erhöhen. Bei konstantem Licht kannst du eine neutrale Graukarte dort halten, wo später die Gesichter sind. Lass die Kamera im Auto-Modus kurz einregeln und klicke auf **Weißabgleich aus Vorschau übernehmen**, um die gemessenen Rot- und Blauwerte als manuelle Einstellung zu übernehmen.
