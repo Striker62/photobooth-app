@@ -16,6 +16,8 @@ Die folgenden Funktionen ergänzen die Photobooth-App 9.0.0 im Striker62-Fork. D
 4. Mit **Vorübergehend testen** die Wirkung in der Vorschau prüfen. **Test beenden** stellt die gespeicherten Werte wieder her. Mit **Kameraeinstellungen speichern** übernimmt die Box die Werte dauerhaft.
 5. Mit **Profil speichern** kannst du die Werte unter einem Namen wie „Holzhintergrund mit LED-Licht“ ablegen. Später unter **Lichtprofil laden** auswählen, testen und mit **Kameraeinstellungen speichern** übernehmen.
 
+**Auto ohne Korrekturen** speichert automatischen Weißabgleich, 0 EV und 0 % Blaukorrektur direkt als Kameraeinstellungen.
+
 ### Graukarte lokal auswerten
 
 Fotografiere eine matte 18-%-Graukarte auf Gesichtshöhe an der Standlinie mit dem Aufnahmelicht. Lade das gespeicherte Testfoto unter **Belichtungsmesser → Graukarte auswerten** und klicke auf eine gleichmäßig beleuchtete Stelle in der Mitte der Karte. Die Auswertung läuft im Browser.
