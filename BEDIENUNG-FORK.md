@@ -42,6 +42,8 @@ Wenn du die Box ohne Telefon nutzt, wähle **Telefon deaktivieren** und bestäti
 
 ## Videogästebuch
 
+In der Gästeansicht erkennst du die Schaltfläche am Kamerasymbol und der Beschriftung **Video**.
+
 Der Videobutton erscheint auf dem vorhandenen Livebild, wenn das Mikrofon eingerichtet und das Videogästebuch aktiv ist. Einmal den Button drücken oder am Buzzer **c** drücken. Nach dem Countdown startet die Aufnahme mit Bild und Ton. Die Dauer übernimmt das Videogästebuch von der ersten Fotoaktion. Noch einmal drücken, um zu stoppen und direkt zu speichern. Nach Ablauf der eingestellten Höchstdauer speichert die Box automatisch. Der Countdown erscheint wie beim Foto mittig im Livebild. Restzeit und Speicherstatus stehen am unteren Bildschirmrand. Während Countdown und Aufnahme ist die Kamera für weitere Fotoaktionen belegt.
 
 Mit aktiviertem Sprachauslöser funktioniert dieselbe Bedienung mit **„Kamera Video“**. Das Wort **Video** ist in der Plugin-Konfiguration einstellbar. Unter **Mediengästebuch → Video** kannst du die Videotaste (Standard **c**) und den freien BCM-Pin einstellen. Leere Felder deaktivieren den jeweiligen Auslöser. Verwende keinen bereits belegten Pin, insbesondere nicht BCM 17 oder 18 bei angeschlossenem Gästebuchtelefon. Für GPIO die globale GPIO-Eingabe einschalten und nach dem Speichern die Dienste neu laden.
